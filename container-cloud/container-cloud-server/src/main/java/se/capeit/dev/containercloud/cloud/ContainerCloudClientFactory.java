@@ -1,55 +1,50 @@
 package se.capeit.dev.containercloud.cloud;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-
-import jetbrains.buildServer.clouds.CloudClientFactory;
-import jetbrains.buildServer.clouds.CloudClientParameters;
-import jetbrains.buildServer.clouds.CloudRegistrar;
-import jetbrains.buildServer.clouds.CloudState;
-import jetbrains.buildServer.serverSide.InvalidProperty;
+import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.clouds.*;
+import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.PropertiesProcessor;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
-import com.intellij.openapi.diagnostic.Logger;
-import jetbrains.buildServer.log.Loggers;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.Map;
 
 
 public class ContainerCloudClientFactory implements CloudClientFactory {
     private static final Logger LOG = Loggers.SERVER; // Logger.getInstance(ContainerCloudClientFactory.class.getName());
     private final String jspPath;
 
-    public ContainerCloudClientFactory(final CloudRegistrar cloudRegistrar, 
+    public ContainerCloudClientFactory(final CloudRegistrar cloudRegistrar,
                                        final PluginDescriptor pluginDescriptor) {
-        LOG.info("ContainerCloudClientFactory.ctor");
+        LOG.info("Creating ContainerCloudClientFactory");
         jspPath = pluginDescriptor.getPluginResourcesPath("profile-settings.jsp");
         cloudRegistrar.registerCloudFactory(this);
-
     }
 
-    public ContainerCloudClient createNewClient(final CloudState state, final CloudClientParameters params) {
-        LOG.info("createNewClient");
+    @NotNull
+    public ContainerCloudClient createNewClient(@NotNull final CloudState state, @NotNull final CloudClientParameters params) {
         try {
             return new ContainerCloudClient(state, params);
-        } 
-        catch (Exception e) {
-            LOG.error(e);
-            return null;
+        } catch (Exception e) {
+            throw new CloudException("Failed to create new Container Cloud client", e);
         }
     }
 
     // Checks if the agent could be an instance of one of the running profiles.
-    public boolean canBeAgentOfType(jetbrains.buildServer.serverSide.AgentDescription description) {
-        LOG.info("canBeAgentOfType " + description.toString() + ": false");
-        return false;
+    public boolean canBeAgentOfType(@NotNull jetbrains.buildServer.serverSide.AgentDescription description) {
+        LOG.info("ClientCloudClientFactory.canBeAgentOfType " + description.toString() + ", hardcoded true!");
+        return true;
     }
 
     // The formal name of the cloud type.
+    @NotNull
     public String getCloudCode() {
-        return ContainerCloudConstants.TYPE;
+        return ContainerCloudConstants.CLOUD_CODE;
     }
 
     // Description to be shown on the web pages
+    @NotNull
     public String getDisplayName() {
         return "Container Cloud";
     }
@@ -60,18 +55,16 @@ public class ContainerCloudClientFactory implements CloudClientFactory {
     }
 
     // Return initial values for form parameters.
+    @NotNull
     public Map<String, String> getInitialParameterValues() {
         LOG.info("String> getInitialParameterValues");
         return Collections.emptyMap();
     }
 
     // Returns the properties processor instance (validator).
+    @NotNull
     public PropertiesProcessor getPropertiesProcessor() {
         LOG.info("getPropertiesProcessor");
-        return new PropertiesProcessor() {
-            public Collection<InvalidProperty> process(final Map<String, String> properties) {
-                return Collections.emptyList();
-            }
-        };
+        return properties -> Collections.emptyList();
     }
 }

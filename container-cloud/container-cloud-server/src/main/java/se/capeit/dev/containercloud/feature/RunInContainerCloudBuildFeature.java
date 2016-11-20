@@ -1,22 +1,32 @@
-package se.capeit.dev.containercloud.feature;
+/*package se.capeit.dev.containercloud.feature;
 
-import jetbrains.buildServer.serverSide.BuildFeature;
-import jetbrains.buildServer.serverSide.InvalidProperty;
-import jetbrains.buildServer.serverSide.PropertiesProcessor;
+import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.clouds.server.CloudManager;
+import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.requirements.Requirement;
+import jetbrains.buildServer.requirements.RequirementType;
+import jetbrains.buildServer.serverSide.*;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import se.capeit.dev.containercloud.cloud.ContainerCloudClient;
+import se.capeit.dev.containercloud.cloud.ContainerCloudConstants;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
 public class RunInContainerCloudBuildFeature extends BuildFeature {
-    private final String jspPath;
+    private static final Logger LOG = Loggers.SERVER; // Logger.getInstance(ContainerCloudClient.class.getName());
 
-    public RunInContainerCloudBuildFeature(final PluginDescriptor pluginDescriptor) {
-        jspPath = pluginDescriptor.getPluginResourcesPath("feature-settings.jsp");
+    private final String jspPath;
+    private final PluginDescriptor pluginDescriptor;
+    private final CloudManager cloudManager;
+
+    public RunInContainerCloudBuildFeature(final PluginDescriptor pluginDescriptor, CloudManager cloudManager) {
+        this.jspPath = pluginDescriptor.getPluginResourcesPath(RunInContainerCloudConstants.FeatureSettingsHtmlFile);
+        this.pluginDescriptor = pluginDescriptor;
+        this.cloudManager = cloudManager;
     }
 
     @NotNull
@@ -46,19 +56,24 @@ public class RunInContainerCloudBuildFeature extends BuildFeature {
     @Nullable
     @Override
     public PropertiesProcessor getParametersProcessor() {
-        return new PropertiesProcessor() {
-            public Collection<InvalidProperty> process(Map<String, String> properties) {
-                ArrayList<InvalidProperty> toReturn = new ArrayList<InvalidProperty>();
-                if (!properties.containsKey(RunInContainerCloudConstants.ParameterName_CloudProfile))
-                    toReturn.add(new InvalidProperty(RunInContainerCloudConstants.ParameterName_CloudProfile,
-                            "Please choose a cloud profile"));
-                if (!properties.containsKey(RunInContainerCloudConstants.ParameterName_Image) ||
-                        properties.get(RunInContainerCloudConstants.ParameterName_Image).isEmpty())
-                    toReturn.add(new InvalidProperty(RunInContainerCloudConstants.ParameterName_Image,
-                            "Please choose an image"));
+        return properties -> {
+            ArrayList<InvalidProperty> toReturn = new ArrayList<>();
+            if (!properties.containsKey(RunInContainerCloudConstants.ParameterName_CloudProfile))
+                toReturn.add(new InvalidProperty(RunInContainerCloudConstants.ParameterName_CloudProfile,
+                        "Please choose a cloud profile"));
+            if (!properties.containsKey(RunInContainerCloudConstants.ParameterName_Image) ||
+                    properties.get(RunInContainerCloudConstants.ParameterName_Image).isEmpty())
+                toReturn.add(new InvalidProperty(RunInContainerCloudConstants.ParameterName_Image,
+                        "Please choose an image"));
 
-                return toReturn;
-            }
+            String profileId = properties.get(RunInContainerCloudConstants.ParameterName_CloudProfile);
+            ContainerCloudClient client = (ContainerCloudClient) cloudManager.getClientIfExists(profileId);
+            String imageId = properties.get(RunInContainerCloudConstants.ParameterName_Image);
+
+            //profile.addImage(imageId);
+            client.addImage(imageId);
+
+            return toReturn;
         };
     }
 
@@ -83,3 +98,4 @@ public class RunInContainerCloudBuildFeature extends BuildFeature {
         return false;
     }
 }
+*/

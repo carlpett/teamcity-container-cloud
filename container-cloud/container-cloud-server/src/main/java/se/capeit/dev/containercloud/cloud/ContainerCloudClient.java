@@ -1,128 +1,144 @@
 package se.capeit.dev.containercloud.cloud;
 
-import java.net.InetAddress;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.*;
-
-import com.spotify.docker.client.*;
-import com.spotify.docker.client.messages.*; 
-import com.spotify.docker.client.exceptions.*;
-import jetbrains.buildServer.clouds.*;
 import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.serverSide.AgentDescription;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ContainerCloudClient implements CloudClientEx {
     private static final Logger LOG = Loggers.SERVER; // Logger.getInstance(ContainerCloudClient.class.getName());
 
-    private static int created = 0;
-
-    final private DockerClient docker;
     private final CloudState state;
-    private CloudErrorInfo lastError;
+    private final Map<String, ContainerCloudImage> images;
+    private final CloudClientParameters cloudClientParams;
+    private boolean canCreateContainers;
 
-    public ContainerCloudClient(CloudState state, final CloudClientParameters params) throws DockerCertificateException {
+    public ContainerCloudClient(CloudState state, final CloudClientParameters params) {
+        LOG.info("Creating container client for profile " + state.getProfileId());
+
+        this.cloudClientParams = params;
         this.state = state;
-        LOG.info("Creating container client");
-        docker = DefaultDockerClient.fromEnv().build();
-        lastError = null;
+        this.canCreateContainers = true;
+        this.images = new HashMap<>();
+    }
+
+    public synchronized void addImage(String containerImageId) {
+        if (images.containsKey(containerImageId)) {
+            LOG.info("Image " + containerImageId + " is already present in profile " + state.getProfileId());
+            return;
+        }
+
+        images.put(containerImageId, new ContainerCloudImage(containerImageId));
+        LOG.info("Added " + containerImageId + " to profile " + state.getProfileId());
     }
 
     // CloudClient
-    public String generateAgentName(jetbrains.buildServer.serverSide.AgentDescription desc) {
+    public String generateAgentName(@NotNull AgentDescription desc) {
         LOG.info("generateAgentName");
         return "TODO-container-agent-name";
     }
+
     /* Call this method to check if it is possible (in theory) to start new instance of a given image in this profile. */
-    public boolean canStartNewInstance(CloudImage image) {
-        LOG.info("canStartNewInstance: " + (created < 1));
-        return created < 1;
+    public boolean canStartNewInstance(@NotNull CloudImage image) {
+        return canCreateContainers;
     }
+
     /* Looks for an image with the specified identifier and returns its handle. */
-    public CloudImage findImageById(String imageId) {
-        LOG.info("findImageById " + imageId);
-        return new ContainerCloudImage(imageId);
+    public CloudImage findImageById(@NotNull String imageId) {
+        return images.getOrDefault(imageId, null);
     }
+
     /* Checks if the agent is an instance of one of the running instances of that cloud profile. */
-    public CloudInstance findInstanceByAgent(jetbrains.buildServer.serverSide.AgentDescription agent) {
-        LOG.info("findInstanceByAgent: " + agent.toString());
+    public CloudInstance findInstanceByAgent(@NotNull AgentDescription agent) {
+        String imageId = agent.getAvailableParameters().get("env." + ContainerCloudConstants.AGENT_ENV_PARAMETER_IMAGE_ID);
+        if (imageId == null) {
+            return null;
+        }
+
+        CloudImage image = findImageById(imageId);
+        if (image == null) {
+            return null;
+        }
+
+        String instanceId = agent.getAvailableParameters().get("env." + ContainerCloudConstants.AGENT_ENV_PARAMETER_INSTANCE_ID); // Container hostname is same as container id[0:12]
+        if (instanceId == null) {
+            return null;
+        }
+
+        return image.findInstanceById(instanceId);
+    }
+
+    /* Returns correct error info if there was any or null. */
+    public CloudErrorInfo getErrorInfo() {
         return null;
     }
-    /* Returns currect error info if there was any or null. */
-    public CloudErrorInfo getErrorInfo() {
-        LOG.info("getErrorInfo: " + lastError);
-        return lastError;
-    }
+
     /* Lists all user selected images. */
+    @NotNull
     public Collection<? extends CloudImage> getImages() {
-        LOG.info("getImages");
-        List<ContainerCloudImage> images = new LinkedList<ContainerCloudImage>();
-        // TODO: Determine this magically somehow
-        images.add(new ContainerCloudImage("jetbrains/teamcity-agent:latest"));
-        return Collections.unmodifiableList(images);
+        //LOG.info("Get images: " + images.keySet().stream().collect(Collectors.joining(",")));
+        return images.values();
     }
+
     /* Checks if the client data is fully ready to be queried by the system. */
     public boolean isInitialized() {
-        LOG.info("isInitialized");
         return true;
     }
 
     // CloudClientEx
     /* Notifies client that it is no longer needed, This is a good time to release all resources allocated to implement the client */
     public void dispose() {
-        LOG.info("dispose");
+        LOG.info("Disposing ContainerCloudClient");
+        canCreateContainers = false;
+        images.values().forEach(ContainerCloudImage::dispose);
     }
+
     /* Restarts instance if possible */
-    public void restartInstance(CloudInstance instance) {
-        LOG.info("restartInstance: " + instance.toString());
-
+    public void restartInstance(@NotNull CloudInstance instance) {
+        throw new UnsupportedOperationException("Restart not implemented");
     }
-    /* Starts a new virtual machine instance */
-    public CloudInstance startNewInstance(CloudImage image, CloudInstanceUserData tag) {
-        LOG.info("startNewInstance");
 
+    /* Starts a new virtual machine instance */
+    @NotNull
+    public CloudInstance startNewInstance(@NotNull CloudImage image, @NotNull CloudInstanceUserData tag) {
         ContainerCloudImage containerImage = image instanceof ContainerCloudImage ? (ContainerCloudImage) image : null;
         if (containerImage == null) {
-            LOG.error("Cannot start instance with image " + image.getId() + ", not a ContainerCloudImage object");
-            return null;
+            throw new CloudException("Cannot start instance with image " + image.getId() + ", not a ContainerCloudImage object");
         }
 
         try {
-            ++created;
-            docker.pull(containerImage.getId());
-
-            String localIp = InetAddress.getLocalHost().getHostAddress();
-
-            ContainerConfig cfg = ContainerConfig.builder()
-                                                 .image(containerImage.getId())
-                                                 .env("SERVER_URL=http://" + localIp + ":8111", "AGENT_NAME=mah-agent")
-                                                 .build();
-            ContainerCreation creation = docker.createContainer(cfg);
-            docker.startContainer(creation.id());
-            ContainerCloudInstance instance = new ContainerCloudInstance(creation.id(), containerImage, docker);
-
+            tag.setAgentRemovePolicy(CloudConstants.AgentRemovePolicyValue.RemoveAgent);
+            ContainerCloudInstance instance = containerImage.startContainer(tag);
             state.registerRunningInstance(instance.getImageId(), instance.getInstanceId());
-
             return instance;
-        }
-        catch(Exception e) {
-            lastError = new CloudErrorInfo(e.getMessage(), e.getMessage(), e);
+        } catch (Exception e) {
             LOG.error("Failed to start new ContainerCloudInstance: " + e.getMessage(), e);
-            return null;
+            throw new CloudException(e.getMessage(), e);
         }
     }
+
     /* Terminates instance. */
-    public void terminateInstance(CloudInstance instance) {
+    public void terminateInstance(@NotNull CloudInstance instance) {
         LOG.info("terminateInstance " + instance.getImageId());
-        ContainerCloudInstance containerInstance = instance instanceof ContainerCloudInstance ? (ContainerCloudInstance) instance : null;
+        CloudImage image = instance.getImage();
 
-        String id = containerInstance.getInstanceId();
-        try {
-            docker.stopContainer(id, 10);
-        } catch (Exception e) {
-            LOG.error("Failed to stop ContainerCloudInstance " + id, e);
+        ContainerCloudImage cloudImage = image instanceof ContainerCloudImage ? (ContainerCloudImage) image : null;
+        if (cloudImage == null) {
+            LOG.error("Cannot stop instance with id " + instance.getInstanceId() + ", not does not have a ContainerCloudImage");
+            return;
         }
+        ContainerCloudInstance cloudInstance = instance instanceof ContainerCloudInstance ? (ContainerCloudInstance) instance : null;
 
-        state.registerTerminatedInstance(containerInstance.getImageId(), containerInstance.getInstanceId());
+        try {
+            cloudImage.stopContainer(cloudInstance);
+        } catch (Exception e) {
+            LOG.error("Failed to stop ContainerCloudInstance " + instance.getInstanceId(), e);
+        }
+        state.registerTerminatedInstance(image.getId(), instance.getInstanceId());
     }
 }

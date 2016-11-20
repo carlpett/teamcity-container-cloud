@@ -69,6 +69,7 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.teamcity:server-web-api:war:10.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.teamcity:cloud-interface:10.0" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.teamcity:cloud-shared:10.0" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.teamcity:cloud-server:10.0" level="project" />
     <orderEntry type="library" name="Maven: com.spotify:docker-client:6.0.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.guava:guava:18.0" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.jaxrs:jackson-jaxrs-json-provider:2.6.0" level="project" />

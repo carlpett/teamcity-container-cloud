@@ -40,6 +40,13 @@
     </dependency>
 
     <dependency>
+      <groupId>org.jetbrains.teamcity</groupId>
+      <artifactId>cloud-server</artifactId>
+      <version>${teamcity-version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
       <groupId>com.spotify</groupId>
       <artifactId>docker-client</artifactId>
       <version>6.0.0</version>
