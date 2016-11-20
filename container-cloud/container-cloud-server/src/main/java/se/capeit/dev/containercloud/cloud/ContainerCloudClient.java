@@ -45,6 +45,7 @@ public class ContainerCloudClient implements CloudClientEx {
 
     /* Call this method to check if it is possible (in theory) to start new instance of a given image in this profile. */
     public boolean canStartNewInstance(@NotNull CloudImage image) {
+        // TODO: Validate that the image is in the list of images
         return canCreateContainers;
     }
 
@@ -100,7 +101,7 @@ public class ContainerCloudClient implements CloudClientEx {
 
     /* Restarts instance if possible */
     public void restartInstance(@NotNull CloudInstance instance) {
-        throw new UnsupportedOperationException("Restart not implemented");
+        throw new UnsupportedOperationException("Restart not supported");
     }
 
     /* Starts a new virtual machine instance */

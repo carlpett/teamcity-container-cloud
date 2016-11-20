@@ -1,4 +1,4 @@
-/*package se.capeit.dev.containercloud.feature;
+package se.capeit.dev.containercloud.feature;
 
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.clouds.server.CloudManager;
@@ -69,8 +69,6 @@ public class RunInContainerCloudBuildFeature extends BuildFeature {
             String profileId = properties.get(RunInContainerCloudConstants.ParameterName_CloudProfile);
             ContainerCloudClient client = (ContainerCloudClient) cloudManager.getClientIfExists(profileId);
             String imageId = properties.get(RunInContainerCloudConstants.ParameterName_Image);
-
-            //profile.addImage(imageId);
             client.addImage(imageId);
 
             return toReturn;
@@ -98,4 +96,3 @@ public class RunInContainerCloudBuildFeature extends BuildFeature {
         return false;
     }
 }
-*/

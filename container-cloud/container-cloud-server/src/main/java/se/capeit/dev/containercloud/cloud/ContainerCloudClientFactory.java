@@ -33,6 +33,7 @@ public class ContainerCloudClientFactory implements CloudClientFactory {
 
     // Checks if the agent could be an instance of one of the running profiles.
     public boolean canBeAgentOfType(@NotNull jetbrains.buildServer.serverSide.AgentDescription description) {
+        // TODO: Shouldn't this actually be false?
         LOG.info("ClientCloudClientFactory.canBeAgentOfType " + description.toString() + ", hardcoded true!");
         return true;
     }

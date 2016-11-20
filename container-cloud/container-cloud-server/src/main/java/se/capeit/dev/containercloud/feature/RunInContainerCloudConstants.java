@@ -1,4 +1,4 @@
-/*package se.capeit.dev.containercloud.feature;
+package se.capeit.dev.containercloud.feature;
 
 public interface RunInContainerCloudConstants {
     String TYPE = "RunInContainerCloud";
@@ -8,4 +8,3 @@ public interface RunInContainerCloudConstants {
     String ParameterName_CloudProfile = "CloudProfile";
     String ParameterName_Image = "Image";
 }
-*/
