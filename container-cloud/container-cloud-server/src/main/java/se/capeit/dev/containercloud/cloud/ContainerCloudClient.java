@@ -5,6 +5,8 @@ import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.AgentDescription;
 import org.jetbrains.annotations.NotNull;
+import se.capeit.dev.containercloud.cloud.providers.ContainerProvider;
+import se.capeit.dev.containercloud.cloud.providers.ContainerProviderFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -16,6 +18,7 @@ public class ContainerCloudClient implements CloudClientEx {
     private final CloudState state;
     private final Map<String, ContainerCloudImage> images;
     private final CloudClientParameters cloudClientParams;
+    private final ContainerProvider containerProvider;
     private boolean canCreateContainers;
 
     public ContainerCloudClient(CloudState state, final CloudClientParameters params) {
@@ -25,6 +28,9 @@ public class ContainerCloudClient implements CloudClientEx {
         this.state = state;
         this.canCreateContainers = true;
         this.images = new HashMap<>();
+        images.put("jetbrains/teamcity-agent:10.0.2", new ContainerCloudImage("jetbrains/teamcity-agent:10.0.2"));
+        // TODO: Factory or similar to get provider from parameters
+        this.containerProvider = ContainerProviderFactory.getProvider(cloudClientParams);
     }
 
     public synchronized void addImage(String containerImageId) {
@@ -96,7 +102,8 @@ public class ContainerCloudClient implements CloudClientEx {
     public void dispose() {
         LOG.info("Disposing ContainerCloudClient");
         canCreateContainers = false;
-        images.values().forEach(ContainerCloudImage::dispose);
+        //images.values().forEach(ContainerCloudImage::dispose);
+        containerProvider.dispose();
     }
 
     /* Restarts instance if possible */
@@ -107,6 +114,11 @@ public class ContainerCloudClient implements CloudClientEx {
     /* Starts a new virtual machine instance */
     @NotNull
     public CloudInstance startNewInstance(@NotNull CloudImage image, @NotNull CloudInstanceUserData tag) {
+        if (!canCreateContainers) {
+            LOG.error("Cannot create new container of image " + image.getId() + ", disposing");
+            return null;
+        }
+
         ContainerCloudImage containerImage = image instanceof ContainerCloudImage ? (ContainerCloudImage) image : null;
         if (containerImage == null) {
             throw new CloudException("Cannot start instance with image " + image.getId() + ", not a ContainerCloudImage object");
@@ -114,7 +126,9 @@ public class ContainerCloudClient implements CloudClientEx {
 
         try {
             tag.setAgentRemovePolicy(CloudConstants.AgentRemovePolicyValue.RemoveAgent);
-            ContainerCloudInstance instance = containerImage.startContainer(tag);
+            ContainerCloudInstance instance = containerProvider.startInstance(containerImage, tag);
+            // TODO: Should there be some instance/image mapping registry instead?
+            containerImage.registerInstance(instance);
             state.registerRunningInstance(instance.getImageId(), instance.getInstanceId());
             return instance;
         } catch (Exception e) {
@@ -136,7 +150,7 @@ public class ContainerCloudClient implements CloudClientEx {
         ContainerCloudInstance cloudInstance = instance instanceof ContainerCloudInstance ? (ContainerCloudInstance) instance : null;
 
         try {
-            cloudImage.stopContainer(cloudInstance);
+            containerProvider.stopInstance(cloudInstance);
         } catch (Exception e) {
             LOG.error("Failed to stop ContainerCloudInstance " + instance.getInstanceId(), e);
         }

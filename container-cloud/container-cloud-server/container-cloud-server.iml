@@ -18,7 +18,6 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.tomcat:tomcat-el-api:7.0.68" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.tomcat:tomcat-servlet-api:7.0.68" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.teamcity:common-api:10.0" level="project" />
-    <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.3" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: commons-httpclient:commons-httpclient:3.1" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.apache.ws.xmlrpc:xmlrpc:2.0.1" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: javax.servlet:servlet-api:2.2" level="project" />
@@ -36,7 +35,6 @@
     <orderEntry type="library" scope="PROVIDED" name="Maven: net.sf.trove4j:trove4j:3.0.3" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.teamcity.idea:trove4j:95.677" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: commons-io:commons-io:1.3.2" level="project" />
-    <orderEntry type="library" scope="PROVIDED" name="Maven: joda-time:joda-time:2.5" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.jetbrains.teamcity.xstream:xstream:1.4.8" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.slf4j:slf4j-log4j12:1.7.5" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.tukaani:xz:1.5" level="project" />
@@ -78,7 +76,6 @@
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.module:jackson-module-jaxb-annotations:2.6.0" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.datatype:jackson-datatype-guava:2.6.0" level="project" />
     <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-databind:2.6.0" level="project" />
-    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.6.0" level="project" />
     <orderEntry type="library" name="Maven: org.glassfish.jersey.core:jersey-client:2.19" level="project" />
     <orderEntry type="library" name="Maven: javax.ws.rs:javax.ws.rs-api:2.0.1" level="project" />
     <orderEntry type="library" name="Maven: org.glassfish.jersey.core:jersey-common:2.19" level="project" />
@@ -113,6 +110,14 @@
     <orderEntry type="library" name="Maven: commons-lang:commons-lang:2.6" level="project" />
     <orderEntry type="library" name="Maven: org.bouncycastle:bcpkix-jdk15on:1.52" level="project" />
     <orderEntry type="library" name="Maven: org.bouncycastle:bcprov-jdk15on:1.52" level="project" />
+    <orderEntry type="library" name="Maven: com.spotify:helios-client:0.9.53" level="project" />
+    <orderEntry type="library" name="Maven: javax.ws.rs:jsr311-api:1.1.1" level="project" />
+    <orderEntry type="library" name="Maven: com.fasterxml.jackson.core:jackson-annotations:2.6.0" level="project" />
+    <orderEntry type="library" name="Maven: org.bouncycastle:bcprov-debug-jdk15on:1.53" level="project" />
+    <orderEntry type="library" name="Maven: com.eaio.uuid:uuid:3.2" level="project" />
+    <orderEntry type="library" name="Maven: com.spotify:ssh-agent-proxy:0.1.4" level="project" />
+    <orderEntry type="library" name="Maven: commons-codec:commons-codec:1.10" level="project" />
+    <orderEntry type="library" name="Maven: joda-time:joda-time:2.3" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.slf4j:slf4j-api:1.7.5" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: org.jetbrains.teamcity:tests-support:10.0" level="project" />
     <orderEntry type="library" scope="TEST" name="Maven: jmock:jmock:1.2.0" level="project" />

@@ -11,7 +11,8 @@
                           enableFilter="false"
                           id="container-provider-selector"
                           className="mediumField">
-      <props:option value="docker-unix-socket">Docker unix socket</props:option>
+      <props:option value="docker-socket">Docker socket</props:option>
+      <props:option value="helios">Helios</props:option>
     </props:selectProperty>
   </td>
 </tr>

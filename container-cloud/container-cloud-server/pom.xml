@@ -54,6 +54,12 @@
     </dependency>
 
     <dependency>
+      <groupId>com.spotify</groupId>
+      <artifactId>helios-client</artifactId>
+      <version>0.9.53</version>
+    </dependency>
+
+    <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
       <version>1.7.5</version>
