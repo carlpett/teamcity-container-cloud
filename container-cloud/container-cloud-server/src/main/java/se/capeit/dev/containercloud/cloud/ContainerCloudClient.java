@@ -29,7 +29,7 @@ public class ContainerCloudClient implements CloudClientEx {
         this.canCreateContainers = true;
         this.images = new HashMap<>();
         images.put("jetbrains/teamcity-agent:10.0.2", new ContainerCloudImage("jetbrains/teamcity-agent:10.0.2"));
-        // TODO: Factory or similar to get provider from parameters
+
         this.containerProvider = ContainerProviderFactory.getProvider(cloudClientParams);
     }
 
