@@ -6,6 +6,7 @@ import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.PropertiesProcessor;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
+import se.capeit.dev.containercloud.cloud.providers.ContainerProviderFactory;
 
 import java.util.Collections;
 import java.util.Map;
@@ -41,7 +42,7 @@ public class ContainerCloudClientFactory implements CloudClientFactory {
     // The formal name of the cloud type.
     @NotNull
     public String getCloudCode() {
-        return ContainerCloudConstants.CLOUD_CODE;
+        return ContainerCloudConstants.CloudCode;
     }
 
     // Description to be shown on the web pages
@@ -58,14 +59,12 @@ public class ContainerCloudClientFactory implements CloudClientFactory {
     // Return initial values for form parameters.
     @NotNull
     public Map<String, String> getInitialParameterValues() {
-        LOG.info("String> getInitialParameterValues");
         return Collections.emptyMap();
     }
 
     // Returns the properties processor instance (validator).
     @NotNull
     public PropertiesProcessor getPropertiesProcessor() {
-        LOG.info("getPropertiesProcessor");
-        return properties -> Collections.emptyList();
+        return ContainerProviderFactory.getPropertiesProcessor();
     }
 }

@@ -1,7 +1,6 @@
 package se.capeit.dev.containercloud.cloud.providers;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.spotify.helios.client.HeliosClient;
 import com.spotify.helios.common.descriptors.*;
 import com.spotify.helios.common.protocol.CreateJobResponse;
@@ -13,10 +12,13 @@ import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.serverSide.InvalidProperty;
+import jetbrains.buildServer.serverSide.PropertiesProcessor;
 import se.capeit.dev.containercloud.cloud.ContainerCloudConstants;
 import se.capeit.dev.containercloud.cloud.ContainerCloudImage;
 import se.capeit.dev.containercloud.cloud.ContainerCloudInstance;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -32,29 +34,30 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
         this.cloudClientParams = cloudClientParams;
         this.heliosClient = HeliosClient.newBuilder()
                 .setUser("teamcity-container-cloud")
-                .setEndpoints("http://172.17.0.2:5801")
+                .setEndpoints(cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_Helios_MasterUrl))
                 .build();
     }
 
     private String instanceIdToHeliosId(String instanceId) {
         // TODO: Horrible hack!
-        return "container-cloud-agent_" + "jetbrains/teamcity-agent:10.0.2".replace('/', '_').replace(':', '_').replace('.', '_') + ":" + VERSION + ":" + instanceId;
+        return "container-cloud-agent:" + VERSION + ":" + instanceId;
     }
+
     private String heliosIdToInstanceId(String heliosId) {
         return heliosId.split(":")[2];
     }
 
     @Override
     public ContainerCloudInstance startInstance(ContainerCloudImage image, CloudInstanceUserData tag) {
-        String name = ("container-cloud-agent_" + image.getId()).replace('/', '_').replace(':', '_').replace('.', '_');
+        String name = "container-cloud-agent";
         Job jobDescriptor = Job.newBuilder()
                 .setImage(image.getId())
                 .setName(name)
                 .setVersion(VERSION)
                 .addEnv("SERVER_URL", tag.getServerAddress())
                 .addEnv("AGENT_NAME", name)
-                .addEnv(ContainerCloudConstants.AGENT_ENV_PARAMETER_IMAGE_ID, image.getId())
-                .addEnv(ContainerCloudConstants.AGENT_ENV_PARAMETER_CLOUD_PROFILE_ID, tag.getProfileId())
+                .addEnv(ContainerCloudConstants.AgentEnvParameterName_ImageId, image.getId())
+                .addEnv(ContainerCloudConstants.AgentEnvParameterName_ProfileId, tag.getProfileId())
                 .buildWithoutHash();
 
         JobDeployResponse jobDeployResponse;
@@ -110,7 +113,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
         try {
             JobId jobId = JobId.fromString(instanceIdToHeliosId(instanceId));
             JobStatus jobStatus = heliosClient.jobStatus(jobId).get();
-            if(jobStatus == null) {
+            if (jobStatus == null) {
                 LOG.warn("Trying to read error state of non-existent job " + jobId.getName());
                 return null;
             }
@@ -128,7 +131,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
         try {
             JobId jobId = JobId.fromString(instanceIdToHeliosId(instanceId));
             JobStatus jobStatus = heliosClient.jobStatus(jobId).get();
-            if(jobStatus == null) {
+            if (jobStatus == null) {
                 LOG.warn("Trying to read network identity of non-existent job " + jobId.getName());
                 return null;
             }
@@ -148,7 +151,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
         try {
             JobId jobId = JobId.fromString(instanceIdToHeliosId(instanceId));
             JobStatus jobStatus = heliosClient.jobStatus(jobId).get();
-            if(jobStatus == null) {
+            if (jobStatus == null) {
                 LOG.warn("Trying to read start time of non-existent job " + jobId.getName());
                 return null;
             }
@@ -193,5 +196,17 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
         } catch (InterruptedException | ExecutionException e) {
             return InstanceStatus.UNKNOWN;
         }
+    }
+
+    public static PropertiesProcessor getPropertiesProcessor() {
+        return properties -> {
+            ArrayList<InvalidProperty> toReturn = new ArrayList<>();
+            if (!properties.containsKey(ContainerCloudConstants.ProfileParameterName_Helios_MasterUrl) ||
+                    properties.get(ContainerCloudConstants.ProfileParameterName_Helios_MasterUrl).isEmpty())
+                toReturn.add(new InvalidProperty(ContainerCloudConstants.ProfileParameterName_Helios_MasterUrl,
+                        "Helios master Url is required"));
+
+            return toReturn;
+        };
     }
 }

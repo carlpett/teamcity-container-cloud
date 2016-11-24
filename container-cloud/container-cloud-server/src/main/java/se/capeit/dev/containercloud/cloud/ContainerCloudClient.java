@@ -62,7 +62,7 @@ public class ContainerCloudClient implements CloudClientEx {
 
     /* Checks if the agent is an instance of one of the running instances of that cloud profile. */
     public CloudInstance findInstanceByAgent(@NotNull AgentDescription agent) {
-        String imageId = agent.getAvailableParameters().get("env." + ContainerCloudConstants.AGENT_ENV_PARAMETER_IMAGE_ID);
+        String imageId = agent.getAvailableParameters().get("env." + ContainerCloudConstants.AgentEnvParameterName_ImageId);
         if (imageId == null) {
             return null;
         }
@@ -72,7 +72,7 @@ public class ContainerCloudClient implements CloudClientEx {
             return null;
         }
 
-        String instanceId = agent.getAvailableParameters().get("env." + ContainerCloudConstants.AGENT_ENV_PARAMETER_INSTANCE_ID); // Container hostname is same as container id[0:12]
+        String instanceId = agent.getAvailableParameters().get("env." + ContainerCloudConstants.AgentEnvParameterName_InstanceId); // Container hostname is same as container id[0:12]
         if (instanceId == null) {
             return null;
         }

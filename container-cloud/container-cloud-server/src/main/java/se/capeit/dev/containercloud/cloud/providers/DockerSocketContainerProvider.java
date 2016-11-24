@@ -14,10 +14,14 @@ import jetbrains.buildServer.clouds.CloudException;
 import jetbrains.buildServer.clouds.CloudInstanceUserData;
 import jetbrains.buildServer.clouds.InstanceStatus;
 import jetbrains.buildServer.log.Loggers;
+import jetbrains.buildServer.serverSide.InvalidProperty;
+import jetbrains.buildServer.serverSide.PropertiesProcessor;
+import org.jetbrains.annotations.NotNull;
 import se.capeit.dev.containercloud.cloud.ContainerCloudConstants;
 import se.capeit.dev.containercloud.cloud.ContainerCloudImage;
 import se.capeit.dev.containercloud.cloud.ContainerCloudInstance;
 
+import java.util.ArrayList;
 import java.util.Date;
 
 public class DockerSocketContainerProvider implements ContainerProvider, ContainerInstanceInfoProvider {
@@ -46,8 +50,8 @@ public class DockerSocketContainerProvider implements ContainerProvider, Contain
                     .image(image.getId())
                     .env("SERVER_URL=" + tag.getServerAddress(),
                             "AGENT_NAME=" + name,
-                            ContainerCloudConstants.AGENT_ENV_PARAMETER_IMAGE_ID + "=" + image.getId(),
-                            ContainerCloudConstants.AGENT_ENV_PARAMETER_CLOUD_PROFILE_ID + "=" + tag.getProfileId())
+                            ContainerCloudConstants.AgentEnvParameterName_ImageId + "=" + image.getId(),
+                            ContainerCloudConstants.AgentEnvParameterName_ProfileId + "=" + tag.getProfileId())
                     .build();
             ContainerCreation creation = dockerClient.createContainer(cfg, name);
             LOG.debug("Starting image " + image.getId());
@@ -131,5 +135,14 @@ public class DockerSocketContainerProvider implements ContainerProvider, Contain
 
         LOG.warn("Could not map state '" + state.toString() + "' to InstanceStatus");
         return InstanceStatus.UNKNOWN;
+    }
+
+    @NotNull
+    public static PropertiesProcessor getPropertiesProcessor() {
+        return properties -> {
+            ArrayList<InvalidProperty> toReturn = new ArrayList<>();
+
+            return toReturn;
+        };
     }
 }

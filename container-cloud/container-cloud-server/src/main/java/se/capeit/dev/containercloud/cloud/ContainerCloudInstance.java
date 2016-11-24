@@ -27,8 +27,8 @@ public class ContainerCloudInstance implements CloudInstance {
     // Checks is the agent is running under this instance
     public boolean containsAgent(@NotNull jetbrains.buildServer.serverSide.AgentDescription agent) {
         Map<String, String> configParams = agent.getConfigurationParameters();
-        return getInstanceId().equals(configParams.get(ContainerCloudConstants.AGENT_ENV_PARAMETER_INSTANCE_ID)) &&
-                getImageId().equals(configParams.get(ContainerCloudConstants.AGENT_ENV_PARAMETER_IMAGE_ID));
+        return getInstanceId().equals(configParams.get(ContainerCloudConstants.AgentEnvParameterName_InstanceId)) &&
+                getImageId().equals(configParams.get(ContainerCloudConstants.AgentEnvParameterName_ImageId));
     }
 
     // Returns correct error info if getStatus() returns InstanceStatus.ERROR value.
