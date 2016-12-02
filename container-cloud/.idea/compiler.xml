@@ -22,12 +22,14 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <processorPath useClasspath="true" />
+        <module name="container-cloud-agent" />
         <module name="container-cloud-server" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="build" target="1.5" />
       <module name="container-cloud" target="1.5" />
+      <module name="container-cloud-agent" target="1.8" />
       <module name="container-cloud-server" target="1.8" />
     </bytecodeTargetLevel>
   </component>

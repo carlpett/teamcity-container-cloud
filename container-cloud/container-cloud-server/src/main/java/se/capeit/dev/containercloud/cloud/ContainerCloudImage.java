@@ -23,8 +23,6 @@ public class ContainerCloudImage implements CloudImage {
         this.instances = new ConcurrentHashMap<>();
     }
 
-    // TODO: Periodically check status of all instances
-
     // Finds instance by instanceId
     public CloudInstance findInstanceById(@NotNull String id) {
         return instances.get(id);
@@ -44,6 +42,10 @@ public class ContainerCloudImage implements CloudImage {
 
     public void registerInstance(ContainerCloudInstance instance) {
         instances.put(instance.getInstanceId(), instance);
+    }
+
+    public void unregisterInstance(@NotNull String instanceId) {
+        instances.remove(instanceId);
     }
 
     @NotNull

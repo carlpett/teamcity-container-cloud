@@ -72,7 +72,7 @@ public class ContainerCloudClient implements CloudClientEx {
             return null;
         }
 
-        String instanceId = agent.getAvailableParameters().get("env." + ContainerCloudConstants.AgentEnvParameterName_InstanceId); // Container hostname is same as container id[0:12]
+        String instanceId = agent.getAvailableParameters().get("env." + ContainerCloudConstants.AgentEnvParameterName_InstanceId);
         if (instanceId == null) {
             return null;
         }
@@ -103,7 +103,6 @@ public class ContainerCloudClient implements CloudClientEx {
         LOG.info("Disposing ContainerCloudClient");
         canCreateContainers = false;
         //images.values().forEach(ContainerCloudImage::dispose);
-        containerProvider.dispose();
     }
 
     /* Restarts instance if possible */
@@ -111,7 +110,7 @@ public class ContainerCloudClient implements CloudClientEx {
         throw new UnsupportedOperationException("Restart not supported");
     }
 
-    /* Starts a new virtual machine instance */
+    /* Starts a new agent */
     @NotNull
     public CloudInstance startNewInstance(@NotNull CloudImage image, @NotNull CloudInstanceUserData tag) {
         if (!canCreateContainers) {
@@ -125,8 +124,12 @@ public class ContainerCloudClient implements CloudClientEx {
         }
 
         try {
-            tag.setAgentRemovePolicy(CloudConstants.AgentRemovePolicyValue.RemoveAgent);
-            ContainerCloudInstance instance = containerProvider.startInstance(containerImage, tag);
+            String instanceId = generateInstanceId(image);
+            tag.addAgentConfigurationParameter("SERVER_URL", tag.getServerAddress());
+            tag.addAgentConfigurationParameter(ContainerCloudConstants.AgentEnvParameterName_ImageId, image.getId());
+            tag.addAgentConfigurationParameter(ContainerCloudConstants.AgentEnvParameterName_InstanceId, instanceId);
+
+            ContainerCloudInstance instance = containerProvider.startInstance(instanceId, containerImage, tag);
             // TODO: Should there be some instance/image mapping registry instead?
             containerImage.registerInstance(instance);
             state.registerRunningInstance(instance.getImageId(), instance.getInstanceId());
@@ -135,6 +138,11 @@ public class ContainerCloudClient implements CloudClientEx {
             LOG.error("Failed to start new ContainerCloudInstance: " + e.getMessage(), e);
             throw new CloudException(e.getMessage(), e);
         }
+    }
+
+    @NotNull
+    private String generateInstanceId(@NotNull CloudImage image) {
+        return image.getId().replace('/', '_').replace(':', '_').replace('.', '_') + "_" + System.currentTimeMillis();
     }
 
     /* Terminates instance. */
@@ -151,6 +159,7 @@ public class ContainerCloudClient implements CloudClientEx {
 
         try {
             containerProvider.stopInstance(cloudInstance);
+            cloudImage.unregisterInstance(cloudInstance.getInstanceId());
         } catch (Exception e) {
             LOG.error("Failed to stop ContainerCloudInstance " + instance.getInstanceId(), e);
         }

@@ -1,7 +1,6 @@
 package se.capeit.dev.containercloud.feature;
 
 import com.intellij.openapi.diagnostic.Logger;
-import jetbrains.buildServer.clouds.server.CloudManager;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.BuildFeature;
 import jetbrains.buildServer.serverSide.InvalidProperty;
@@ -9,7 +8,6 @@ import jetbrains.buildServer.serverSide.PropertiesProcessor;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import se.capeit.dev.containercloud.cloud.ContainerCloudClient;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,13 +17,9 @@ public class RunInContainerCloudBuildFeature extends BuildFeature {
     private static final Logger LOG = Loggers.SERVER; // Logger.getInstance(ContainerCloudClient.class.getName());
 
     private final String jspPath;
-    private final PluginDescriptor pluginDescriptor;
-    private final CloudManager cloudManager;
 
-    public RunInContainerCloudBuildFeature(final PluginDescriptor pluginDescriptor, CloudManager cloudManager) {
+    public RunInContainerCloudBuildFeature(final PluginDescriptor pluginDescriptor) {
         this.jspPath = pluginDescriptor.getPluginResourcesPath(RunInContainerCloudConstants.FeatureSettingsHtmlFile);
-        this.pluginDescriptor = pluginDescriptor;
-        this.cloudManager = cloudManager;
     }
 
     @NotNull
@@ -64,11 +58,7 @@ public class RunInContainerCloudBuildFeature extends BuildFeature {
                     properties.get(RunInContainerCloudConstants.ParameterName_Image).isEmpty())
                 toReturn.add(new InvalidProperty(RunInContainerCloudConstants.ParameterName_Image,
                         "Please choose an image"));
-
-            String profileId = properties.get(RunInContainerCloudConstants.ParameterName_CloudProfile);
-            ContainerCloudClient client = (ContainerCloudClient) cloudManager.getClientIfExists(profileId);
-            String imageId = properties.get(RunInContainerCloudConstants.ParameterName_Image);
-            client.addImage(imageId);
+            // TODO: Validate image is in correct format ((repo)?/(name):(version))
 
             return toReturn;
         };

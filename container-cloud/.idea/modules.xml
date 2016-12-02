@@ -4,6 +4,7 @@
     <modules>
       <module fileurl="file://$PROJECT_DIR$/build/build.iml" filepath="$PROJECT_DIR$/build/build.iml" />
       <module fileurl="file://$PROJECT_DIR$/container-cloud.iml" filepath="$PROJECT_DIR$/container-cloud.iml" />
+      <module fileurl="file://$PROJECT_DIR$/container-cloud-agent/container-cloud-agent.iml" filepath="$PROJECT_DIR$/container-cloud-agent/container-cloud-agent.iml" />
       <module fileurl="file://$PROJECT_DIR$/container-cloud-server/container-cloud-server.iml" filepath="$PROJECT_DIR$/container-cloud-server/container-cloud-server.iml" />
     </modules>
   </component>

@@ -1,28 +1,24 @@
 <?xml version="1.0"?>
 <assembly>
-    <id>plugin-assembly</id>
+    <id>plugin-agent-assembly</id>
     <includeBaseDirectory>false</includeBaseDirectory>
     <formats>
         <format>zip</format>
     </formats>
     <files>
         <file>
-            <source>target/teamcity-plugin.xml</source>
+            <source>../container-cloud-agent/teamcity-plugin.xml</source>
             <outputDirectory>/</outputDirectory>
-        </file>
-        <file>
-            <source>target/container-cloud-agent.zip</source>
-            <outputDirectory>agent</outputDirectory>
         </file>
     </files>
     <moduleSets>
         <moduleSet>
             <useAllReactorProjects>true</useAllReactorProjects>
             <includes>
-                <include>se.capeit.dev:container-cloud-server</include>
+                <include>se.capeit.dev:container-cloud-agent</include>
             </includes>
             <binaries>
-                <outputDirectory>server</outputDirectory>
+                <outputDirectory>lib</outputDirectory>
                 <unpack>false</unpack>
                 <dependencySets>
                     <dependencySet>
@@ -35,3 +31,4 @@
         </moduleSet>
     </moduleSets>
 </assembly>
+

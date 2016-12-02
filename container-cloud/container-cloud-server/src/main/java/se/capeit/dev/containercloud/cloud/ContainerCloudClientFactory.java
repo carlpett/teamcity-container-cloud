@@ -43,6 +43,7 @@ public class ContainerCloudClientFactory implements CloudClientFactory {
     @NotNull
     public String getCloudCode() {
         return ContainerCloudConstants.CloudCode;
+
     }
 
     // Description to be shown on the web pages

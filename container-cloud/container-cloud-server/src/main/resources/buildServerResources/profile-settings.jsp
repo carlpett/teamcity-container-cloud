@@ -19,13 +19,13 @@
 </tr>
 
 <tr class="container-cloud_provider-settings container-cloud_provider-settings_${constants.profileParameterValue_ContainerProvider_DockerSocket}">
-    <th><label for="${constants.profileParameterName_DockerSocket_Socket}">Socket</label></th>
+    <th><label for="${constants.profileParameterName_DockerSocket_Endpoint}">Endpoint</label></th>
     <td>
-        <props:textProperty name="${constants.profileParameterName_DockerSocket_Socket}"
+        <props:textProperty name="${constants.profileParameterName_DockerSocket_Endpoint}"
                             className="longField" />
-        <span class="error" id="error_${constants.profileParameterName_DockerSocket_Socket}"></span>
+        <span class="error" id="error_${constants.profileParameterName_DockerSocket_Endpoint}"></span>
         <span class="smallNote">
-            Path to the Docker socket, reachable from the Teamcity server. Can be either a unix domain socket
+            Url to the Docker API endpoint, reachable from the Teamcity server. Can be either a unix domain socket
             (<pre>unix:///var/run/docker.sock</pre>) or a http(s) socket (<pre>https://remote-host</pre>)
         </span>
     </td>

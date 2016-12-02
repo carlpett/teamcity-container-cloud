@@ -3,4 +3,5 @@
 <beans default-autowire="constructor">
     <bean class="se.capeit.dev.containercloud.cloud.ContainerCloudClientFactory" />
     <bean class="se.capeit.dev.containercloud.feature.RunInContainerCloudBuildFeature" />
+    <bean class="se.capeit.dev.containercloud.feature.RunInContainerCloudBuildQueuedListener" />
 </beans>

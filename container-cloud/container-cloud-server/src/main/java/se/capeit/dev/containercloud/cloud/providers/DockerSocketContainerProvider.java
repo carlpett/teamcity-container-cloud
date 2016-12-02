@@ -23,6 +23,7 @@ import se.capeit.dev.containercloud.cloud.ContainerCloudInstance;
 
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 public class DockerSocketContainerProvider implements ContainerProvider, ContainerInstanceInfoProvider {
     private static final Logger LOG = Loggers.SERVER; // Logger.getInstance(ContainerCloudImage.class.getName());
@@ -32,55 +33,49 @@ public class DockerSocketContainerProvider implements ContainerProvider, Contain
 
     public DockerSocketContainerProvider(CloudClientParameters cloudClientParams) {
         try {
-            // TODO: Allow parameters from profile
-            dockerClient = DefaultDockerClient.fromEnv().build();
+            DefaultDockerClient.Builder builder = DefaultDockerClient.fromEnv();
+
+            String apiEndpoint = cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_DockerSocket_Endpoint);
+            if(apiEndpoint != null) {
+                builder.uri(apiEndpoint);
+            }
+
+            dockerClient = builder.build();
         } catch (DockerCertificateException e) {
             throw new CloudException("Failed to create docker client", e);
         }
     }
 
     @Override
-    public ContainerCloudInstance startInstance(ContainerCloudImage image, CloudInstanceUserData tag) {
-        String name = ("container-cloud-agent_" + image.getId() + "-" + generateUniqueId()).replace('/', '_').replace(':', '_').replace('.', '_');
-
+    public ContainerCloudInstance startInstance(@NotNull String instanceId, @NotNull ContainerCloudImage image, @NotNull CloudInstanceUserData tag) {
         try {
             LOG.debug("Pulling image " + image.getId());
             dockerClient.pull(image.getId());
+
+            List<String> environment = new ArrayList<>();
+            tag.getCustomAgentConfigurationParameters().forEach((key, value) -> environment.add(key + "=" + value));
+
             ContainerConfig cfg = ContainerConfig.builder()
                     .image(image.getId())
-                    .env("SERVER_URL=" + tag.getServerAddress(),
-                            "AGENT_NAME=" + name,
-                            ContainerCloudConstants.AgentEnvParameterName_ImageId + "=" + image.getId(),
-                            ContainerCloudConstants.AgentEnvParameterName_ProfileId + "=" + tag.getProfileId())
+                    .env(environment)
                     .build();
-            ContainerCreation creation = dockerClient.createContainer(cfg, name);
+            ContainerCreation creation = dockerClient.createContainer(cfg, instanceId);
             LOG.debug("Starting image " + image.getId());
             dockerClient.startContainer(creation.id());
 
-            // TODO: Container hostname is set to first 12 characters of id. Use this as instance id until something better is figured out
-            String id = creation.id().substring(0, 12);
-            return new ContainerCloudInstance(id, image, this);
+            return new ContainerCloudInstance(instanceId, image, this);
         } catch (Exception e) {
             throw new CloudException("Failed to start instance of image " + image.getId(), e);
         }
     }
 
     @Override
-    public void stopInstance(ContainerCloudInstance instance) {
+    public void stopInstance(@NotNull ContainerCloudInstance instance) {
         try {
             dockerClient.stopContainer(instance.getInstanceId(), CONTAINER_STOP_TIMEOUT_SECONDS);
         } catch (Exception e) {
             throw new CloudException("Failed to stop instance " + instance.getInstanceId(), e);
         }
-    }
-
-    @Override
-    public void dispose() {
-    }
-
-    private String generateUniqueId() {
-        // TODO: This is just a temporary measure to avoid name conflicts
-        return String.valueOf(System.currentTimeMillis() / 1000L);
     }
 
     @Override
