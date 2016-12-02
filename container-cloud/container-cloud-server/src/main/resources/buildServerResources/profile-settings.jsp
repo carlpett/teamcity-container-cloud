@@ -44,6 +44,32 @@
         </span>
     </td>
 </tr>
+<tr class="container-cloud_provider-settings container-cloud_provider-settings_${constants.profileParameterValue_ContainerProvider_Helios}">
+    <th>
+        <label for="${constants.profileParameterName_Helios_HostNamePattern}">Host name pattern</label>
+    </th>
+    <td>
+        <props:textProperty name="${constants.profileParameterName_Helios_HostNamePattern}"
+                            className="longField" />
+        <span class="error" id="error_${constants.profileParameterName_Helios_HostNamePattern}"></span>
+        <span class="smallNote">
+            Host name pattern used to filter hosts, using substring matching. If empty, all hosts are used.
+        </span>
+    </td>
+</tr>
+<tr class="container-cloud_provider-settings container-cloud_provider-settings_${constants.profileParameterValue_ContainerProvider_Helios}">
+    <th>
+        <label for="${constants.profileParameterName_Helios_HostSelectors}">Host label selectors</label>
+    </th>
+    <td>
+        <props:textProperty name="${constants.profileParameterName_Helios_HostSelectors}"
+                            className="longField" />
+        <span class="error" id="error_${constants.profileParameterName_Helios_HostSelectors}"></span>
+        <span class="smallNote">
+            Label selectors used to filter hosts (eg <pre>role=builder</pre>). If empty, all hosts are used.
+        </span>
+    </td>
+</tr>
 
 <script type="text/javascript">
 $j(document).ready(function() {

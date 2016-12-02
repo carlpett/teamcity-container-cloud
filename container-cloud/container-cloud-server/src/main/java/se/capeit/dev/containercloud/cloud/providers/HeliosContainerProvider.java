@@ -19,20 +19,19 @@ import se.capeit.dev.containercloud.cloud.ContainerCloudConstants;
 import se.capeit.dev.containercloud.cloud.ContainerCloudImage;
 import se.capeit.dev.containercloud.cloud.ContainerCloudInstance;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 public class HeliosContainerProvider implements ContainerProvider, ContainerInstanceInfoProvider {
     private static final Logger LOG = Loggers.SERVER; // Logger.getInstance(ContainerCloudInstance.class.getName());
     private static final String VERSION = "1";
-    private static final int TIMEOUT_JOB_CREATION = 3;
 
     private final HeliosClient heliosClient;
     private final CloudClientParameters cloudClientParams;
     private final ConcurrentHashMap<String, String> instanceIdJobMap;
+    private final Random random = new Random();
 
     public HeliosContainerProvider(CloudClientParameters cloudClientParams) {
         this.cloudClientParams = cloudClientParams;
@@ -41,6 +40,34 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
                 .setEndpoints(cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_Helios_MasterUrl))
                 .build();
         instanceIdJobMap = new ConcurrentHashMap<>();
+    }
+
+    private String getRandomMatchingHost() {
+        String namePattern = cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_Helios_HostNamePattern);
+        String selectors = cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_Helios_HostSelectors);
+
+        try {
+            List<String> hosts;
+            if (namePattern != null && selectors != null) {
+                Set<String> selectorSet = Arrays.stream(selectors.split(",")).collect(Collectors.toSet());
+                hosts = heliosClient.listHosts(namePattern, selectorSet).get();
+            } else if (namePattern != null) {
+                hosts = heliosClient.listHosts(namePattern).get();
+            } else if (selectors != null) {
+                Set<String> selectorSet = Arrays.stream(selectors.split(",")).collect(Collectors.toSet());
+                hosts = heliosClient.listHosts(selectorSet).get();
+            } else {
+                hosts = heliosClient.listHosts().get();
+            }
+            if (hosts.size() == 0) {
+                throw new CloudException("No Helios hosts matched conditions set in cloud profile!");
+            }
+
+            int idx = random.nextInt(hosts.size());
+            return hosts.get(idx);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new CloudException("Could not get host to run agent on", e);
+        }
     }
 
     @Override
@@ -60,17 +87,26 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
             CreateJobResponse jobResponse = heliosClient.createJob(jobDescriptor).get();
             id = jobResponse.getId();
 
-            // Todo: Host picking strategy
-            String host = "solo.local.";
+            List<String> jobCreationErrors = jobResponse.getErrors();
+            if (!jobCreationErrors.isEmpty()) {
+                String errorList = jobCreationErrors.stream().collect(Collectors.joining("\n"));
+                throw new CloudException("Failed to create Helios job, errors were reported:\n" + errorList);
+            }
+            if (jobResponse.getStatus() != CreateJobResponse.Status.OK) {
+                throw new CloudException("Failed to create Helios job, status is '" + jobResponse.getStatus() + "', not 'OK'");
+            }
+
+            String host = getRandomMatchingHost(); // TODO: Implement some more intelligent host picking strategy? (look at host stats like memory etc)
+            LOG.info("Deploying job " + id + " on host " + host);
             jobDeployResponse = heliosClient.deploy(Deployment.of(JobId.fromString(id), Goal.START), host).get();
-            LOG.info("Started Helios job " + id);
-        } catch (Exception e) {
+        } catch (InterruptedException | ExecutionException e) {
             throw new CloudException("Failed to start Helios job", e);
         }
 
         if (jobDeployResponse.getStatus() != JobDeployResponse.Status.OK) {
-            throw new CloudException("Helios job status is '" + jobDeployResponse.getStatus() + "' not OK");
+            throw new CloudException("Helios job status is '" + jobDeployResponse.getStatus() + "' not 'OK'");
         }
+        LOG.info("Started Helios job " + id);
 
         ContainerCloudInstance cloudInstance = new ContainerCloudInstance(instanceId, image, this);
         instanceIdJobMap.put(instanceId, id);

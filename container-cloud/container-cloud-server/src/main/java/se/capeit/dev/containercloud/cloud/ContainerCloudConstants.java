@@ -10,6 +10,8 @@ public final class ContainerCloudConstants {
     public static final String ProfileParameterName_DockerSocket_Endpoint = "DockerSocket-Endpoint";
 
     public static final String ProfileParameterName_Helios_MasterUrl = "Helios-MasterUrl";
+    public static final String ProfileParameterName_Helios_HostNamePattern = "Helios-HostNamePattern";
+    public static final String ProfileParameterName_Helios_HostSelectors = "Helios-HostSelectors";
 
     public static final String AgentEnvParameterName_ImageId = "CONTAINER_CLOUD_AGENT_IMAGE_ID";
     public static final String AgentEnvParameterName_InstanceId = "CONTAINER_CLOUD_INSTANCE_ID";
@@ -37,6 +39,10 @@ public final class ContainerCloudConstants {
     public String getProfileParameterName_Helios_MasterUrl() {
         return ProfileParameterName_Helios_MasterUrl;
     }
+
+    public String getProfileParameterName_Helios_HostNamePattern() { return ProfileParameterName_Helios_HostNamePattern; }
+
+    public String getProfileParameterName_Helios_HostSelectors() { return ProfileParameterName_Helios_HostSelectors; }
 
     public String getAgentEnvParameterName_ImageId() {
         return AgentEnvParameterName_ImageId;
