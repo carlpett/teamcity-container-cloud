@@ -16,10 +16,10 @@ import java.util.Map;
 public class RunInContainerCloudBuildFeature extends BuildFeature {
     private static final Logger LOG = Loggers.SERVER; // Logger.getInstance(ContainerCloudClient.class.getName());
 
-    private final String jspPath;
+    private final String editParametersPath;
 
     public RunInContainerCloudBuildFeature(final PluginDescriptor pluginDescriptor) {
-        this.jspPath = pluginDescriptor.getPluginResourcesPath(RunInContainerCloudConstants.FeatureSettingsHtmlFile);
+        this.editParametersPath = pluginDescriptor.getPluginResourcesPath(RunInContainerCloudConstants.FeatureSettingsHtmlFile);
     }
 
     @NotNull
@@ -67,7 +67,7 @@ public class RunInContainerCloudBuildFeature extends BuildFeature {
     @Nullable
     @Override
     public Map<String, String> getDefaultParameters() {
-        HashMap<String, String> defaults = new HashMap<String, String>();
+        HashMap<String, String> defaults = new HashMap<>();
         defaults.put(RunInContainerCloudConstants.ParameterName_CloudProfile, "");
         defaults.put(RunInContainerCloudConstants.ParameterName_Image, "");
 
@@ -77,7 +77,7 @@ public class RunInContainerCloudBuildFeature extends BuildFeature {
     @Nullable
     @Override
     public String getEditParametersUrl() {
-        return jspPath;
+        return editParametersPath;
     }
 
     @Override

@@ -1,15 +1,14 @@
-<%@ page import="se.capeit.dev.containercloud.feature.RunInContainerCloudConstants" %>
 <%@ taglib prefix="props" tagdir="/WEB-INF/tags/props" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 
+<jsp:useBean id="constants" class="se.capeit.dev.containercloud.feature.RunInContainerCloudConstants"/>
 <jsp:useBean id="propertiesBean" scope="request" type="jetbrains.buildServer.controllers.BasePropertiesBean"/>
-<jsp:useBean id="cloudProfiles" type="java.util.Map<java.lang.String, java.lang.String>" scope="request"/>
+<jsp:useBean id="cloudProfiles" scope="request" type="java.util.Map<java.lang.String, java.lang.String>" />
 
-<c:set var="profileParamName" value="<%=RunInContainerCloudConstants.ParameterName_CloudProfile%>"/>
 <tr>
-  <th><label for="${profileParamName}">Container cloud profile</label></th>
+  <th><label for="${constants.parameterName_CloudProfile}">Container cloud profile</label></th>
   <td>
-    <props:selectProperty name="${profileParamName}"
+    <props:selectProperty name="${constants.parameterName_CloudProfile}"
                           enableFilter="false"
                           className="mediumField">
       <c:forEach items="${cloudProfiles}" var="profile">
@@ -19,10 +18,9 @@
   </td>
 </tr>
 
-<c:set var="imageParamName" value="<%=RunInContainerCloudConstants.ParameterName_Image%>"/>
 <tr>
-  <th><label for="${imageParamName}">Image</label></th>
+  <th><label for="${constants.parameterName_Image}">Image</label></th>
   <td>
-    <props:textProperty name="${imageParamName}" className="longField" />
+    <props:textProperty name="${constants.parameterName_Image}" className="longField" />
   </td>
 </tr>
