@@ -16,6 +16,7 @@ public final class ContainerCloudConstants {
     public static final String AgentEnvParameterName_ImageId = "CONTAINER_CLOUD_AGENT_IMAGE_ID";
     public static final String AgentEnvParameterName_InstanceId = "CONTAINER_CLOUD_INSTANCE_ID";
 
+    // JSP getters
     public String getCloudCode() {
         return CloudCode;
     }

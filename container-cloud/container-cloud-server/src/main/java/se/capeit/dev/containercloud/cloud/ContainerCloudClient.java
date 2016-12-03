@@ -21,15 +21,13 @@ public class ContainerCloudClient implements CloudClientEx {
     private final ContainerProvider containerProvider;
     private boolean canCreateContainers;
 
-    public ContainerCloudClient(CloudState state, final CloudClientParameters params) {
+    public ContainerCloudClient(CloudState state, CloudClientParameters params) {
         LOG.info("Creating container client for profile " + state.getProfileId());
 
         this.cloudClientParams = params;
         this.state = state;
         this.canCreateContainers = true;
         this.images = new HashMap<>();
-        images.put("jetbrains/teamcity-agent:10.0.2", new ContainerCloudImage("jetbrains/teamcity-agent:10.0.2"));
-
         this.containerProvider = ContainerProviderFactory.getProvider(cloudClientParams);
     }
 
