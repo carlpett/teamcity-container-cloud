@@ -145,10 +145,14 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
                 LOG.warn("Trying to read error state of non-existent job " + jobId.getName());
                 return null;
             }
-            String host = jobStatus.getTaskStatuses().keySet().stream()
-                    .findFirst()
-                    .orElseThrow(() -> new CloudException("Container " + instanceId + " not deployed on any host"));
-            return jobStatus.getTaskStatuses().get(host).getContainerError();
+            Set<String> hostStatuses = jobStatus.getTaskStatuses().keySet();
+            if (hostStatuses.isEmpty()) {
+                LOG.debug("Trying to read error state before job is deployed for job " + jobId.getName());
+                return null;
+            }
+
+            // Reasonably, a build agent job should only ever be deployed to one host, but let's be thorough
+            return hostStatuses.stream().map(host -> host + ":" + jobStatus.getTaskStatuses().get(host).getContainerError()).collect(Collectors.joining("\n"));
         } catch (InterruptedException | ExecutionException e) {
             throw new CloudException("Failed to read error information from instance " + instanceId, e);
         }

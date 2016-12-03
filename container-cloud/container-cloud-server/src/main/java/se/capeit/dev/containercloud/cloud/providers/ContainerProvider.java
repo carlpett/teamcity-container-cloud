@@ -7,5 +7,6 @@ import se.capeit.dev.containercloud.cloud.ContainerCloudInstance;
 
 public interface ContainerProvider {
     ContainerCloudInstance startInstance(@NotNull String instanceId, @NotNull ContainerCloudImage image, @NotNull CloudInstanceUserData tag);
+
     void stopInstance(@NotNull ContainerCloudInstance instance);
 }

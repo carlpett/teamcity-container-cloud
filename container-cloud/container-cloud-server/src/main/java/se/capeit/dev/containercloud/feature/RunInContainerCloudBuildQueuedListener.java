@@ -6,6 +6,7 @@ import jetbrains.buildServer.clouds.server.CloudManager;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.BuildServerAdapter;
 import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
+import jetbrains.buildServer.serverSide.SBuildServer;
 import jetbrains.buildServer.serverSide.SQueuedBuild;
 import org.jetbrains.annotations.NotNull;
 import se.capeit.dev.containercloud.cloud.ContainerCloudClient;
@@ -19,9 +20,10 @@ public class RunInContainerCloudBuildQueuedListener extends BuildServerAdapter {
 
     private final CloudManager cloudManager;
 
-    public RunInContainerCloudBuildQueuedListener(CloudManager cloudManager) {
-        LOG.info("Creating build queued listener");
+    public RunInContainerCloudBuildQueuedListener(@NotNull SBuildServer server, @NotNull CloudManager cloudManager) {
         this.cloudManager = cloudManager;
+
+        server.addListener(this);
     }
 
     @Override
@@ -44,6 +46,7 @@ public class RunInContainerCloudBuildQueuedListener extends BuildServerAdapter {
             return;
         }
 
+        LOG.info("Adding image " + parameters.get(RunInContainerCloudConstants.ParameterName_Image) + " to profile " + profileId);
         ContainerCloudClient containerClient = (ContainerCloudClient) clientEx;
         containerClient.addImage(parameters.get(RunInContainerCloudConstants.ParameterName_Image));
     }

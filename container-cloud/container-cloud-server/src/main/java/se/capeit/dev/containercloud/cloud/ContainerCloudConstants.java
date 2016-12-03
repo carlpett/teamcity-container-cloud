@@ -40,9 +40,13 @@ public final class ContainerCloudConstants {
         return ProfileParameterName_Helios_MasterUrl;
     }
 
-    public String getProfileParameterName_Helios_HostNamePattern() { return ProfileParameterName_Helios_HostNamePattern; }
+    public String getProfileParameterName_Helios_HostNamePattern() {
+        return ProfileParameterName_Helios_HostNamePattern;
+    }
 
-    public String getProfileParameterName_Helios_HostSelectors() { return ProfileParameterName_Helios_HostSelectors; }
+    public String getProfileParameterName_Helios_HostSelectors() {
+        return ProfileParameterName_Helios_HostSelectors;
+    }
 
     public String getAgentEnvParameterName_ImageId() {
         return AgentEnvParameterName_ImageId;

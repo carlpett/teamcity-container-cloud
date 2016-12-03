@@ -126,6 +126,7 @@ public class ContainerCloudClient implements CloudClientEx {
         try {
             String instanceId = generateInstanceId(image);
             tag.addAgentConfigurationParameter("SERVER_URL", tag.getServerAddress());
+            tag.addAgentConfigurationParameter("AGENT_NAME", "container-cloud_" + instanceId);
             tag.addAgentConfigurationParameter(ContainerCloudConstants.AgentEnvParameterName_ImageId, image.getId());
             tag.addAgentConfigurationParameter(ContainerCloudConstants.AgentEnvParameterName_InstanceId, instanceId);
 

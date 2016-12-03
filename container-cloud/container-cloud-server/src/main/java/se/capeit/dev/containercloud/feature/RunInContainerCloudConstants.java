@@ -8,6 +8,11 @@ public final class RunInContainerCloudConstants {
     public static final String ParameterName_CloudProfile = "CloudProfile";
     public static final String ParameterName_Image = "Image";
 
-    public String getParameterName_CloudProfile() { return ParameterName_CloudProfile; }
-    public String getParameterName_Image() { return ParameterName_Image; }
+    public String getParameterName_CloudProfile() {
+        return ParameterName_CloudProfile;
+    }
+
+    public String getParameterName_Image() {
+        return ParameterName_Image;
+    }
 }
