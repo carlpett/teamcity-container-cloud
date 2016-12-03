@@ -26,7 +26,6 @@ import java.util.stream.Collectors;
 
 public class HeliosContainerProvider implements ContainerProvider, ContainerInstanceInfoProvider {
     private static final Logger LOG = Loggers.SERVER; // Logger.getInstance(ContainerCloudInstance.class.getName());
-    private static final String VERSION = "1";
 
     private final HeliosClient heliosClient;
     private final CloudClientParameters cloudClientParams;
@@ -75,11 +74,10 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
         Job.Builder jobBuilder = Job.newBuilder()
                 .setImage(image.getId())
                 .setName("container-cloud-agent")
-                .setVersion(VERSION)
-                .setHash(instanceId);
+                .setVersion(instanceId);
         // Add all tag custom configuration as environment vars
         tag.getCustomAgentConfigurationParameters().forEach(jobBuilder::addEnv);
-        Job jobDescriptor = jobBuilder.buildWithoutHash();
+        Job jobDescriptor = jobBuilder.build();
 
         JobDeployResponse jobDeployResponse;
         String id;
@@ -148,17 +146,24 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
             JobId jobId = JobId.fromString(instanceIdJobMap.get(instanceId));
             JobStatus jobStatus = heliosClient.jobStatus(jobId).get();
             if (jobStatus == null) {
-                LOG.warn("Trying to read error state of non-existent job " + jobId.getName());
+                LOG.warn("Trying to read error state of non-existent job " + jobId);
                 return null;
             }
             Set<String> hostStatuses = jobStatus.getTaskStatuses().keySet();
             if (hostStatuses.isEmpty()) {
-                LOG.debug("Trying to read error state before job is deployed for job " + jobId.getName());
+                LOG.debug("Trying to read error state before job is deployed for job " + jobId);
                 return null;
             }
 
-            // Reasonably, a build agent job should only ever be deployed to one host, but let's be thorough
-            return hostStatuses.stream().map(host -> host + ":" + jobStatus.getTaskStatuses().get(host).getContainerError()).collect(Collectors.joining("\n"));
+            // There really should only ever be one host that the job is deployed to, but let's be thorough
+            StringBuilder sb = new StringBuilder();
+            for (String host : hostStatuses) {
+                TaskStatus status = jobStatus.getTaskStatuses().get(host);
+                if (status.getContainerError() != null && !status.getContainerError().isEmpty()) {
+                    sb.append(host).append(": ").append(status.getContainerError()).append("\n");
+                }
+            }
+            return sb.toString();
         } catch (InterruptedException | ExecutionException e) {
             throw new CloudException("Failed to read error information from instance " + instanceId, e);
         }
