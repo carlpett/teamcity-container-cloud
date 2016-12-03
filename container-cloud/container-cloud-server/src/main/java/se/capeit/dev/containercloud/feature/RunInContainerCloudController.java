@@ -41,7 +41,6 @@ public class RunInContainerCloudController extends BaseController {
     @Nullable
     @Override
     protected ModelAndView doHandle(@NotNull HttpServletRequest httpServletRequest, @NotNull HttpServletResponse httpServletResponse) throws Exception {
-        LOG.info("Controller doing Handle");
         ModelAndView mv = new ModelAndView(pluginDescriptor.getPluginResourcesPath(RunInContainerCloudConstants.FeatureSettingsJspFile));
 
         mv.getModel().put("cloudProfiles", getProfiles());
@@ -50,7 +49,6 @@ public class RunInContainerCloudController extends BaseController {
     }
 
     private Map<String, String> getProfiles() {
-        LOG.info("Controller getting profiles");
         return cloudManager.listProfiles().stream()
                 .filter(cloudProfile -> cloudProfile.getCloudCode().equals(ContainerCloudConstants.CloudCode))
                 .collect(Collectors.toMap(CloudProfile::getProfileId, CloudProfileData::getProfileName));

@@ -6,6 +6,7 @@ import com.spotify.docker.client.DefaultDockerClient;
 import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.ContainerNotFoundException;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
+import com.spotify.docker.client.exceptions.DockerException;
 import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.ContainerState;
@@ -72,8 +73,9 @@ public class DockerSocketContainerProvider implements ContainerProvider, Contain
     @Override
     public void stopInstance(@NotNull ContainerCloudInstance instance) {
         try {
+            LOG.debug("Stopping container " + instance.getInstanceId());
             dockerClient.stopContainer(instance.getInstanceId(), CONTAINER_STOP_TIMEOUT_SECONDS);
-        } catch (Exception e) {
+        } catch (InterruptedException | DockerException e) {
             throw new CloudException("Failed to stop instance " + instance.getInstanceId(), e);
         }
     }
@@ -84,8 +86,9 @@ public class DockerSocketContainerProvider implements ContainerProvider, Contain
             return dockerClient.inspectContainer(instanceId).state().error();
         } catch (ContainerNotFoundException e) {
             return null;
-        } catch (Exception e) {
+        } catch (InterruptedException | DockerException e) {
             throw new CloudException("Could not get error for container " + instanceId, e);
+
         }
     }
 

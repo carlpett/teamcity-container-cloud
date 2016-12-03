@@ -18,7 +18,6 @@ public class ContainerCloudClientFactory implements CloudClientFactory {
 
     public ContainerCloudClientFactory(final CloudRegistrar cloudRegistrar,
                                        final PluginDescriptor pluginDescriptor) {
-        LOG.info("Creating ContainerCloudClientFactory");
         jspPath = pluginDescriptor.getPluginResourcesPath("profile-settings.jsp");
         cloudRegistrar.registerCloudFactory(this);
     }

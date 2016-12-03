@@ -97,7 +97,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
             }
 
             String host = getRandomMatchingHost(); // TODO: Implement some more intelligent host picking strategy? (look at host stats like memory etc)
-            LOG.info("Deploying job " + id + " on host " + host);
+            LOG.debug("Deploying job " + id + " on host " + host);
             jobDeployResponse = heliosClient.deploy(Deployment.of(JobId.fromString(id), Goal.START), host).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new CloudException("Failed to start Helios job", e);
@@ -106,7 +106,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
         if (jobDeployResponse.getStatus() != JobDeployResponse.Status.OK) {
             throw new CloudException("Helios job status is '" + jobDeployResponse.getStatus() + "' not 'OK'");
         }
-        LOG.info("Started Helios job " + id);
+        LOG.debug("Started Helios job " + id);
 
         ContainerCloudInstance cloudInstance = new ContainerCloudInstance(instanceId, image, this);
         instanceIdJobMap.put(instanceId, id);
@@ -117,19 +117,25 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
     public void stopInstance(@NotNull ContainerCloudInstance instance) {
         try {
             JobId jobId = JobId.fromString(instanceIdJobMap.get(instance.getInstanceId()));
+            LOG.debug("Stopping Helios job " + jobId);
             JobStatus jobStatus = heliosClient.jobStatus(jobId).get();
             Set<String> hosts = jobStatus.getDeployments().keySet();
 
             for (String host : hosts) {
+                LOG.debug("Undeploying " + jobId + " from " + host);
                 JobUndeployResponse jobUndeployResponse = heliosClient.undeploy(jobId, host).get();
                 if (jobUndeployResponse.getStatus() != JobUndeployResponse.Status.OK) {
                     throw new CloudException("Failed to undeploy Helios job, status " + jobUndeployResponse.getStatus());
                 }
             }
+
+            LOG.debug("Undeploy finished, deleting job " + jobId);
             JobDeleteResponse jobDeleteResponse = heliosClient.deleteJob(jobId).get();
             if (jobDeleteResponse.getStatus() != JobDeleteResponse.Status.OK) {
                 throw new CloudException("Failed to remove Helios job, status " + jobDeleteResponse.getStatus());
             }
+
+            LOG.debug("Finished stopping instance " + instance.getInstanceId());
             instanceIdJobMap.remove(instance.getInstanceId());
         } catch (InterruptedException | ExecutionException e) {
             throw new CloudException("Failed to stop instance", e);
