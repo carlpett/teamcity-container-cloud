@@ -15,6 +15,7 @@
           <props:option value="${profile.key}">${profile.value}</props:option>
       </c:forEach>
     </props:selectProperty>
+    <span class="error" id="error_${constants.parameterName_CloudProfile}"></span>
   </td>
 </tr>
 
@@ -22,5 +23,6 @@
   <th><label for="${constants.parameterName_Image}">Image</label></th>
   <td>
     <props:textProperty name="${constants.parameterName_Image}" className="longField" />
+    <span class="error" id="error_${constants.parameterName_Image}"></span>
   </td>
 </tr>

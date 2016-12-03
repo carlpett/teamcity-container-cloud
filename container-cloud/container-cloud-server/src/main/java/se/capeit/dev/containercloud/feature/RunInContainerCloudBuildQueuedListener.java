@@ -4,10 +4,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.clouds.CloudClientEx;
 import jetbrains.buildServer.clouds.server.CloudManager;
 import jetbrains.buildServer.log.Loggers;
-import jetbrains.buildServer.serverSide.BuildServerAdapter;
-import jetbrains.buildServer.serverSide.SBuildFeatureDescriptor;
-import jetbrains.buildServer.serverSide.SBuildServer;
-import jetbrains.buildServer.serverSide.SQueuedBuild;
+import jetbrains.buildServer.serverSide.*;
 import org.jetbrains.annotations.NotNull;
 import se.capeit.dev.containercloud.cloud.ContainerCloudClient;
 
@@ -28,7 +25,18 @@ public class RunInContainerCloudBuildQueuedListener extends BuildServerAdapter {
 
     @Override
     public void buildTypeAddedToQueue(@NotNull SQueuedBuild queuedBuild) {
-        Collection<SBuildFeatureDescriptor> featureDescriptors = queuedBuild.getBuildType().getBuildFeaturesOfType(RunInContainerCloudConstants.TYPE);
+        // This is added as a sort of "last resort" to make sure versioned settings etc don't bypass the
+        // buildTypePersisted event and leave builds hanging in the queue.
+        addImageForBuildType(queuedBuild.getBuildType());
+    }
+
+    @Override
+    public void buildTypePersisted(@NotNull SBuildType buildType) {
+        addImageForBuildType(buildType);
+    }
+
+    private void addImageForBuildType(@NotNull SBuildType buildType) {
+        Collection<SBuildFeatureDescriptor> featureDescriptors = buildType.getBuildFeaturesOfType(RunInContainerCloudConstants.TYPE);
         // There is either zero or one feature
         Optional<SBuildFeatureDescriptor> feature = featureDescriptors.stream().findAny();
 
@@ -42,7 +50,7 @@ public class RunInContainerCloudBuildQueuedListener extends BuildServerAdapter {
         String profileId = parameters.get(RunInContainerCloudConstants.ParameterName_CloudProfile);
         CloudClientEx clientEx = cloudManager.getClientIfExists(profileId);
         if (clientEx == null || !(clientEx instanceof ContainerCloudClient)) {
-            LOG.warn("BuildType " + queuedBuild.getBuildTypeId() + " has a RunInContainerCloud feature indicating profile " + profileId + ", but there is no such cloud client registered");
+            LOG.warn("BuildType " + buildType.getConfigId() + " has a RunInContainerCloud feature indicating profile " + profileId + ", but there is no such cloud client registered");
             return;
         }
 

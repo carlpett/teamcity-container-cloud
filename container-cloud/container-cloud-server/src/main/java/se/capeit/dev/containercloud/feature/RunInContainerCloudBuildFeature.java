@@ -1,6 +1,7 @@
 package se.capeit.dev.containercloud.feature;
 
 import com.intellij.openapi.diagnostic.Logger;
+import jetbrains.buildServer.clouds.server.CloudManager;
 import jetbrains.buildServer.log.Loggers;
 import jetbrains.buildServer.serverSide.BuildFeature;
 import jetbrains.buildServer.serverSide.InvalidProperty;
@@ -17,9 +18,11 @@ public class RunInContainerCloudBuildFeature extends BuildFeature {
     private static final Logger LOG = Loggers.SERVER; // Logger.getInstance(ContainerCloudClient.class.getName());
 
     private final String editParametersPath;
+    private final CloudManager cloudManager;
 
-    public RunInContainerCloudBuildFeature(final PluginDescriptor pluginDescriptor) {
+    public RunInContainerCloudBuildFeature(PluginDescriptor pluginDescriptor, CloudManager cloudManager) {
         this.editParametersPath = pluginDescriptor.getPluginResourcesPath(RunInContainerCloudConstants.FeatureSettingsHtmlFile);
+        this.cloudManager = cloudManager;
     }
 
     @NotNull
@@ -38,8 +41,12 @@ public class RunInContainerCloudBuildFeature extends BuildFeature {
     @Override
     public String describeParameters(@NotNull Map<String, String> params) {
         StringBuilder sb = new StringBuilder();
+
+        String profileId = params.get(RunInContainerCloudConstants.ParameterName_CloudProfile);
+        String profileName = cloudManager.findProfileById(profileId).getProfileName();
         sb.append("Cloud profile: ");
-        sb.append(params.get(RunInContainerCloudConstants.ParameterName_CloudProfile));
+        sb.append(profileName);
+
         sb.append("\nImage: ");
         sb.append(params.get(RunInContainerCloudConstants.ParameterName_Image));
 
@@ -54,11 +61,14 @@ public class RunInContainerCloudBuildFeature extends BuildFeature {
             if (!properties.containsKey(RunInContainerCloudConstants.ParameterName_CloudProfile))
                 toReturn.add(new InvalidProperty(RunInContainerCloudConstants.ParameterName_CloudProfile,
                         "Please choose a cloud profile"));
+
             if (!properties.containsKey(RunInContainerCloudConstants.ParameterName_Image) ||
                     properties.get(RunInContainerCloudConstants.ParameterName_Image).isEmpty())
                 toReturn.add(new InvalidProperty(RunInContainerCloudConstants.ParameterName_Image,
                         "Please choose an image"));
-            // TODO: Validate image is in correct format ((repo)?/(name):(version))
+            else if (!properties.get(RunInContainerCloudConstants.ParameterName_Image).matches(RunInContainerCloudConstants.ContainerImageRegex))
+                toReturn.add(new InvalidProperty(RunInContainerCloudConstants.ParameterName_Image,
+                        "Image must have format owner/image:version or repo-domain/owner/image:version (note that upper-case letters are not allowed)"));
 
             return toReturn;
         };
