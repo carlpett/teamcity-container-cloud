@@ -9,16 +9,17 @@ import org.jetbrains.annotations.NotNull;
 import se.capeit.dev.containercloud.cloud.providers.ContainerProviderFactory;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 
 public class ContainerCloudClientFactory implements CloudClientFactory {
     private static final Logger LOG = Loggers.SERVER; // Logger.getInstance(ContainerCloudClientFactory.class.getName());
-    private final String jspPath;
+    private final String editProfilePath;
 
     public ContainerCloudClientFactory(final CloudRegistrar cloudRegistrar,
                                        final PluginDescriptor pluginDescriptor) {
-        jspPath = pluginDescriptor.getPluginResourcesPath("profile-settings.jsp");
+        editProfilePath = pluginDescriptor.getPluginResourcesPath(ContainerCloudConstants.ProfileSettingsJspFile);
         cloudRegistrar.registerCloudFactory(this);
     }
 
@@ -53,13 +54,15 @@ public class ContainerCloudClientFactory implements CloudClientFactory {
 
     // Properties editor jsp
     public String getEditProfileUrl() {
-        return jspPath;
+        return editProfilePath;
     }
 
     // Return initial values for form parameters.
     @NotNull
     public Map<String, String> getInitialParameterValues() {
-        return Collections.emptyMap();
+        Map<String, String> initialValues = new HashMap<>();
+        initialValues.put(ContainerCloudConstants.ProfileParameterName_Images, "[]"); // Default to empty JSON array
+        return initialValues;
     }
 
     // Returns the properties processor instance (validator).

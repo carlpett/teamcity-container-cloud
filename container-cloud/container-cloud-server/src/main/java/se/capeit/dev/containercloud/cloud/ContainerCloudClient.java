@@ -10,7 +10,9 @@ import se.capeit.dev.containercloud.cloud.providers.ContainerProviderFactory;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class ContainerCloudClient implements CloudClientEx {
     private static final Logger LOG = Loggers.SERVER; // Logger.getInstance(ContainerCloudClient.class.getName());
@@ -27,8 +29,30 @@ public class ContainerCloudClient implements CloudClientEx {
         this.cloudClientParams = params;
         this.state = state;
         this.canCreateContainers = true;
-        this.images = new HashMap<>();
+
+        this.images = loadImagesFromProfileParameters();
         this.containerProvider = ContainerProviderFactory.getProvider(cloudClientParams);
+    }
+
+    private Map<String, ContainerCloudImage> loadImagesFromProfileParameters() {
+        String imagesJson = cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_Images);
+        if (imagesJson == null || imagesJson.isEmpty()) {
+            return new HashMap<>();
+        }
+        return CloudImageParameters.collectionFromJson(imagesJson).stream()
+                .map(CloudImageParameters::getId)
+                .collect(Collectors.toMap(id -> id, ContainerCloudImage::new));
+    }
+
+    private void saveImagesToProfileParameters() {
+        List<CloudImageParameters> cloudImageParameters = images.values().stream()
+                .map(image -> {
+                    CloudImageParameters cip = new CloudImageParameters();
+                    cip.setParameter(CloudImageParameters.SOURCE_ID_FIELD, image.getId());
+                    return cip;
+                })
+                .collect(Collectors.toList());
+        cloudClientParams.setParameter(ContainerCloudConstants.ProfileParameterName_Images, CloudImageParameters.collectionToJson(cloudImageParameters));
     }
 
     public synchronized void addImage(String containerImageId) {
@@ -37,7 +61,11 @@ public class ContainerCloudClient implements CloudClientEx {
             return;
         }
 
+        // Add to active list of images
         images.put(containerImageId, new ContainerCloudImage(containerImageId));
+        // Add to profile itself so image is still available if server is restarted
+        saveImagesToProfileParameters();
+
         LOG.info("Added " + containerImageId + " to profile " + state.getProfileId());
     }
 

@@ -9,6 +9,7 @@ import jetbrains.buildServer.serverSide.PropertiesProcessor;
 import jetbrains.buildServer.web.openapi.PluginDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import se.capeit.dev.containercloud.cloud.ContainerCloudConstants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -66,7 +67,7 @@ public class RunInContainerCloudBuildFeature extends BuildFeature {
                     properties.get(RunInContainerCloudConstants.ParameterName_Image).isEmpty())
                 toReturn.add(new InvalidProperty(RunInContainerCloudConstants.ParameterName_Image,
                         "Please choose an image"));
-            else if (!properties.get(RunInContainerCloudConstants.ParameterName_Image).matches(RunInContainerCloudConstants.ContainerImageRegex))
+            else if (!properties.get(RunInContainerCloudConstants.ParameterName_Image).matches(ContainerCloudConstants.ContainerImageRegex))
                 toReturn.add(new InvalidProperty(RunInContainerCloudConstants.ParameterName_Image,
                         "Image must have format owner/image:version or repo-domain/owner/image:version (note that upper-case letters are not allowed)"));
 
