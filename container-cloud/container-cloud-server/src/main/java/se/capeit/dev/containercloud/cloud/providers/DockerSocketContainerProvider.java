@@ -37,7 +37,7 @@ public class DockerSocketContainerProvider implements ContainerProvider, Contain
             DefaultDockerClient.Builder builder = DefaultDockerClient.fromEnv();
 
             String apiEndpoint = cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_DockerSocket_Endpoint);
-            if (apiEndpoint != null) {
+            if (apiEndpoint != null && !apiEndpoint.isEmpty()) {
                 builder.uri(apiEndpoint);
             }
 
