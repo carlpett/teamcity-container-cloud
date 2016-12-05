@@ -22,6 +22,7 @@ public class ContainerCloudClient implements CloudClientEx {
     private final Map<String, ContainerCloudImage> images;
     private final CloudClientParameters cloudClientParams;
     private final ContainerProvider containerProvider;
+    private CloudErrorInfo lastError;
     private boolean canCreateContainers;
 
     public ContainerCloudClient(CloudState state, CloudClientParameters params) {
@@ -30,6 +31,7 @@ public class ContainerCloudClient implements CloudClientEx {
         this.cloudClientParams = params;
         this.state = state;
         this.canCreateContainers = true;
+        this.lastError = null;
 
         this.images = loadImagesFromProfileParameters();
         this.containerProvider = ContainerProviderFactory.getProvider(cloudClientParams);
@@ -109,7 +111,7 @@ public class ContainerCloudClient implements CloudClientEx {
 
     /* Returns correct error info if there was any or null. */
     public CloudErrorInfo getErrorInfo() {
-        return null;
+        return lastError;
     }
 
     /* Lists all user selected images. */
@@ -164,6 +166,7 @@ public class ContainerCloudClient implements CloudClientEx {
             return instance;
         } catch (Exception e) {
             LOG.error("Failed to start new ContainerCloudInstance: " + e.getMessage(), e);
+            lastError = new CloudErrorInfo(e.getMessage(), e.getMessage(), e);
             throw new CloudException(e.getMessage(), e);
         }
     }
@@ -190,6 +193,7 @@ public class ContainerCloudClient implements CloudClientEx {
             cloudImage.unregisterInstance(cloudInstance.getInstanceId());
         } catch (Exception e) {
             LOG.error("Failed to stop ContainerCloudInstance " + instance.getInstanceId(), e);
+            lastError = new CloudErrorInfo(e.getMessage(), e.getMessage(), e);
         }
         state.registerTerminatedInstance(image.getId(), instance.getInstanceId());
     }
