@@ -6,8 +6,21 @@
 <jsp:useBean id="constants" class="se.capeit.dev.containercloud.cloud.ContainerCloudConstants"/>
 
 <style type="text/css">
-pre.inline-code-block {
+.inline-code {
     display: inline;
+    font-family: monospace;
+}
+
+.flex-image-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 31em;
+}
+
+#container-images > option {
+    padding-left: 0.2em;
+    padding-top: 0.2em;
 }
 </style>
 
@@ -31,8 +44,8 @@ pre.inline-code-block {
                             className="longField" />
         <span class="error" id="error_${constants.profileParameterName_DockerSocket_Endpoint}"></span>
         <span class="smallNote">
-            Url to the Docker API endpoint, reachable from the Teamcity server. Can be either a unix domain socket
-            (<pre class="inline-code-block">unix:///var/run/docker.sock</pre>) or a http(s) socket (<pre class="inline-code-block">https://remote-host</pre>)
+            <p>Url to the Docker API endpoint, reachable from the Teamcity server. Can be either a unix domain socket (<span class="inline-code">unix:///var/run/docker.sock</span>) or a http(s) socket (<span class="inline-code">https://remote-host</span>).</p>
+            <p>If not specified, will use the <span class="inline-code">DOCKER_HOST</span> environment variable.</p>
         </span>
     </td>
 </tr>
@@ -72,7 +85,7 @@ pre.inline-code-block {
                             className="longField" />
         <span class="error" id="error_${constants.profileParameterName_Helios_HostSelectors}"></span>
         <span class="smallNote">
-            Label selectors used to filter hosts (eg <pre class="inline-code-block">role=builder</pre>). If empty, all hosts are used.
+            Label selectors used to filter hosts (eg <span class="inline-code">role=builder</span>). If empty, all hosts are used.
         </span>
     </td>
 </tr>
@@ -82,8 +95,8 @@ pre.inline-code-block {
     <td>
         <c:set var="images" value="${propertiesBean.properties[constants.profileParameterName_Images]}"/>
         <input type="hidden" name="prop:${constants.profileParameterName_Images}" id="${constants.profileParameterName_Images}-backing-field"  data-err-id="error_${constants.profileParameterName_Images}" value="<c:out value='${images}'/>"/>
-        <div>
-            <input class="mediumField" id="add-image-staging" />
+        <div class="flex-image-container">
+            <input type="text" class="mediumField textProperty" id="add-image-staging" />
             <!-- This emulates the forms:addButton tag, which for some reason does not play nice with jquery events -->
             <a class="btn" id="add-container-image">
                 <span>Add image</span><!-- removed classes: icon_before icon16 addNew -->
@@ -91,11 +104,18 @@ pre.inline-code-block {
         </div>
         <span class="error" id="error_${constants.profileParameterName_Images}"></span>
 
-        <select id="container-images" multiple="multiple" class="mediumField">
-        </select>
-        <a class="btn" id="remove-container-images">
-            <span>Remove image(s)</span>
-        </a>
+        <div class="flex-image-container">
+            <select id="container-images" multiple="multiple" class="mediumField">
+            </select>
+            <a class="btn" id="remove-container-images">
+                <span>Remove image(s)</span>
+            </a>
+        </div>
+
+        <span class="smallNote">
+            Images available from this provider. Note that if images are specified in a "Run in Container Cloud" Build
+            feature for a build configuration, these will be added here as well.
+        </span>
     </td>
 </tr>
 
@@ -135,7 +155,7 @@ $j(document).ready(function() {
         var image = document.getElementById("add-image-staging").value;
         // Validate
         if(!/${constants.containerImageRegex}/.test(image)) {
-            document.getElementById("error_${constants.profileParameterName_Images}").innerHTML = "Image format not valid";
+            document.getElementById("error_${constants.profileParameterName_Images}").innerHTML = "Image must have format owner/image:version or repo-domain/owner/image:version (note that upper-case letters are not allowed)";
             return;
         }
         document.getElementById("error_${constants.profileParameterName_Images}").innerHTML = "";
