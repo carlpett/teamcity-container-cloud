@@ -1,5 +1,6 @@
 package se.capeit.dev.containercloud.cloud.providers;
 
+import com.google.common.base.Strings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.spotify.docker.client.DefaultDockerClient;
@@ -37,7 +38,7 @@ public class DockerSocketContainerProvider implements ContainerProvider, Contain
             DefaultDockerClient.Builder builder = DefaultDockerClient.fromEnv();
 
             String apiEndpoint = cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_DockerSocket_Endpoint);
-            if (apiEndpoint != null && !apiEndpoint.isEmpty()) {
+            if (!Strings.isNullOrEmpty(apiEndpoint)) {
                 builder.uri(apiEndpoint);
             }
 

@@ -1,5 +1,6 @@
 package se.capeit.dev.containercloud.cloud;
 
+import com.google.common.base.Strings;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.clouds.CloudErrorInfo;
 import jetbrains.buildServer.clouds.CloudImage;
@@ -34,9 +35,8 @@ public class ContainerCloudInstance implements CloudInstance {
     // Returns correct error info if getStatus() returns InstanceStatus.ERROR value.
     public CloudErrorInfo getErrorInfo() {
         try {
-
             String error = infoProvider.getError(id);
-            if (error == null || error.trim().isEmpty()) {
+            if (Strings.isNullOrEmpty(error)) {
                 return null;
             }
             return new CloudErrorInfo(error);

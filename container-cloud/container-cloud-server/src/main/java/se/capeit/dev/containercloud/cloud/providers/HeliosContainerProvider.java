@@ -1,5 +1,6 @@
 package se.capeit.dev.containercloud.cloud.providers;
 
+import com.google.common.base.Strings;
 import com.intellij.openapi.diagnostic.Logger;
 import com.spotify.helios.client.HeliosClient;
 import com.spotify.helios.common.descriptors.*;
@@ -47,12 +48,12 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
 
         try {
             List<String> hosts;
-            if (namePattern != null && selectors != null) {
+            if (!Strings.isNullOrEmpty(namePattern) && !Strings.isNullOrEmpty(selectors)) {
                 Set<String> selectorSet = Arrays.stream(selectors.split(",")).collect(Collectors.toSet());
                 hosts = heliosClient.listHosts(namePattern, selectorSet).get();
-            } else if (namePattern != null) {
+            } else if (!Strings.isNullOrEmpty(namePattern)) {
                 hosts = heliosClient.listHosts(namePattern).get();
-            } else if (selectors != null) {
+            } else if (!Strings.isNullOrEmpty(selectors)) {
                 Set<String> selectorSet = Arrays.stream(selectors.split(",")).collect(Collectors.toSet());
                 hosts = heliosClient.listHosts(selectorSet).get();
             } else {

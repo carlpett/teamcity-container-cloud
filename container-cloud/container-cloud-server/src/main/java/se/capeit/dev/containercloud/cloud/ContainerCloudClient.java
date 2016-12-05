@@ -1,5 +1,6 @@
 package se.capeit.dev.containercloud.cloud;
 
+import com.google.common.base.Strings;
 import com.intellij.openapi.diagnostic.Logger;
 import jetbrains.buildServer.clouds.*;
 import jetbrains.buildServer.log.Loggers;
@@ -36,7 +37,7 @@ public class ContainerCloudClient implements CloudClientEx {
 
     private Map<String, ContainerCloudImage> loadImagesFromProfileParameters() {
         String imagesJson = cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_Images);
-        if (imagesJson == null || imagesJson.isEmpty()) {
+        if (Strings.isNullOrEmpty(imagesJson)) {
             return new HashMap<>();
         }
         return CloudImageParameters.collectionFromJson(imagesJson).stream()
@@ -57,7 +58,7 @@ public class ContainerCloudClient implements CloudClientEx {
 
     public synchronized void addImage(String containerImageId) {
         if (images.containsKey(containerImageId)) {
-            LOG.info("Image " + containerImageId + " is already present in profile " + state.getProfileId());
+            LOG.debug("Image " + containerImageId + " is already present in profile " + state.getProfileId());
             return;
         }
 
@@ -66,7 +67,7 @@ public class ContainerCloudClient implements CloudClientEx {
         // Add to profile itself so image is still available if server is restarted
         saveImagesToProfileParameters();
 
-        LOG.info("Added " + containerImageId + " to profile " + state.getProfileId());
+        LOG.debug("Added " + containerImageId + " to profile " + state.getProfileId());
     }
 
     // CloudClient
@@ -89,7 +90,7 @@ public class ContainerCloudClient implements CloudClientEx {
     /* Checks if the agent is an instance of one of the running instances of that cloud profile. */
     public CloudInstance findInstanceByAgent(@NotNull AgentDescription agent) {
         String imageId = agent.getAvailableParameters().get("env." + ContainerCloudConstants.AgentEnvParameterName_ImageId);
-        if (imageId == null) {
+        if (Strings.isNullOrEmpty(imageId)) {
             return null;
         }
 
@@ -99,7 +100,7 @@ public class ContainerCloudClient implements CloudClientEx {
         }
 
         String instanceId = agent.getAvailableParameters().get("env." + ContainerCloudConstants.AgentEnvParameterName_InstanceId);
-        if (instanceId == null) {
+        if (Strings.isNullOrEmpty(instanceId)) {
             return null;
         }
 
