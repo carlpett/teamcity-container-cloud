@@ -18,7 +18,7 @@
             <version>${teamcity-version}</version>
             <scope>provided</scope>
         </dependency>
-        <!-- This is actually not a Maven dep? -->
+        <!-- Not open api, needs to be copied from TC agent installation (webapps/ROOT/WEB-INF/lib/agent.jar) to build -->
         <dependency>
             <groupId>org.jetbrains.teamcity</groupId>
             <artifactId>agent</artifactId>
