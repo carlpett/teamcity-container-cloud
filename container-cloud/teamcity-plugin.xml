@@ -4,13 +4,11 @@
     <name>container-cloud</name>
     <display-name>container-cloud</display-name>
     <version>@Version@</version>
-    <description>Plugin description</description>
-    <download-url>Plugin download URL</download-url>
-    <email>Plugin author e-mail</email>
+    <description>Run agents in containers</description>
+    <download-url>https://github.com/carlpett/teamcity-container-cloud</download-url>
+    <email>carlpett@users.noreply.github.com</email>
     <vendor>
-      <name>@VendorName@</name>
-      <url>@VendorURL@</url>
-      <logo>Plugin vendor logo URL</logo>
+      <name>Capeit</name>
     </vendor>
   </info>
   <deployment use-separate-classloader="true" />
