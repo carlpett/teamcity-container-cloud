@@ -1,6 +1,7 @@
 package se.capeit.dev.containercloud.cloud.providers;
 
 import com.google.common.base.Strings;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.intellij.openapi.diagnostic.Logger;
 import com.spotify.helios.client.HeliosClient;
 import com.spotify.helios.common.descriptors.*;
@@ -23,10 +24,13 @@ import se.capeit.dev.containercloud.cloud.ContainerCloudInstance;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 public class HeliosContainerProvider implements ContainerProvider, ContainerInstanceInfoProvider {
     private static final Logger LOG = Loggers.SERVER; // Logger.getInstance(ContainerCloudInstance.class.getName());
+    private static final int HELIOS_OPERATION_TIMEOUT_SECONDS = 5;
 
     private final HeliosClient heliosClient;
     private final CloudClientParameters cloudClientParams;
@@ -43,31 +47,40 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
     }
 
     private String getRandomMatchingHost() {
-        String namePattern = cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_Helios_HostNamePattern);
-        String selectors = cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_Helios_HostSelectors);
-
         try {
-            List<String> hosts;
-            if (!Strings.isNullOrEmpty(namePattern) && !Strings.isNullOrEmpty(selectors)) {
-                Set<String> selectorSet = Arrays.stream(selectors.split(",")).collect(Collectors.toSet());
-                hosts = heliosClient.listHosts(namePattern, selectorSet).get();
-            } else if (!Strings.isNullOrEmpty(namePattern)) {
-                hosts = heliosClient.listHosts(namePattern).get();
-            } else if (!Strings.isNullOrEmpty(selectors)) {
-                Set<String> selectorSet = Arrays.stream(selectors.split(",")).collect(Collectors.toSet());
-                hosts = heliosClient.listHosts(selectorSet).get();
-            } else {
-                hosts = heliosClient.listHosts().get();
-            }
+            List<String> hosts = getHosts();
             if (hosts.size() == 0) {
                 throw new CloudException("No Helios hosts matched conditions set in cloud profile!");
             }
 
             int idx = random.nextInt(hosts.size());
             return hosts.get(idx);
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new CloudException("Could not get host to run agent on", e);
         }
+    }
+
+    private <T> T getHeliosResult(ListenableFuture<T> future) throws InterruptedException, ExecutionException, TimeoutException {
+        return future.get(HELIOS_OPERATION_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    }
+
+    private List<String> getHosts() throws InterruptedException, ExecutionException, TimeoutException {
+        String namePattern = cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_Helios_HostNamePattern);
+        String selectors = cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_Helios_HostSelectors);
+
+        List<String> hosts;
+        if (!Strings.isNullOrEmpty(namePattern) && !Strings.isNullOrEmpty(selectors)) {
+            Set<String> selectorSet = Arrays.stream(selectors.split(",")).collect(Collectors.toSet());
+            hosts = getHeliosResult(heliosClient.listHosts(namePattern, selectorSet));
+        } else if (!Strings.isNullOrEmpty(namePattern)) {
+            hosts = getHeliosResult(heliosClient.listHosts(namePattern));
+        } else if (!Strings.isNullOrEmpty(selectors)) {
+            Set<String> selectorSet = Arrays.stream(selectors.split(",")).collect(Collectors.toSet());
+            hosts = getHeliosResult(heliosClient.listHosts(selectorSet));
+        } else {
+            hosts = getHeliosResult(heliosClient.listHosts());
+        }
+        return hosts;
     }
 
     @Override
@@ -83,7 +96,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
         JobDeployResponse jobDeployResponse;
         String id;
         try {
-            CreateJobResponse jobResponse = heliosClient.createJob(jobDescriptor).get();
+            CreateJobResponse jobResponse = getHeliosResult(heliosClient.createJob(jobDescriptor));
             id = jobResponse.getId();
 
             List<String> jobCreationErrors = jobResponse.getErrors();
@@ -97,8 +110,8 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
 
             String host = getRandomMatchingHost(); // TODO: Implement some more intelligent host picking strategy? (look at host stats like memory etc)
             LOG.debug("Deploying job " + id + " on host " + host);
-            jobDeployResponse = heliosClient.deploy(Deployment.of(JobId.fromString(id), Goal.START), host).get();
-        } catch (InterruptedException | ExecutionException e) {
+            jobDeployResponse = getHeliosResult(heliosClient.deploy(Deployment.of(JobId.fromString(id), Goal.START), host));
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new CloudException("Failed to start Helios job", e);
         }
 
@@ -117,26 +130,26 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
         try {
             JobId jobId = JobId.fromString(instanceIdJobMap.get(instance.getInstanceId()));
             LOG.debug("Stopping Helios job " + jobId);
-            JobStatus jobStatus = heliosClient.jobStatus(jobId).get();
+            JobStatus jobStatus = getHeliosResult(heliosClient.jobStatus(jobId));
             Set<String> hosts = jobStatus.getDeployments().keySet();
 
             for (String host : hosts) {
                 LOG.debug("Undeploying " + jobId + " from " + host);
-                JobUndeployResponse jobUndeployResponse = heliosClient.undeploy(jobId, host).get();
+                JobUndeployResponse jobUndeployResponse = getHeliosResult(heliosClient.undeploy(jobId, host));
                 if (jobUndeployResponse.getStatus() != JobUndeployResponse.Status.OK) {
                     throw new CloudException("Failed to undeploy Helios job, status " + jobUndeployResponse.getStatus());
                 }
             }
 
             LOG.debug("Undeploy finished, deleting job " + jobId);
-            JobDeleteResponse jobDeleteResponse = heliosClient.deleteJob(jobId).get();
+            JobDeleteResponse jobDeleteResponse = getHeliosResult(heliosClient.deleteJob(jobId));
             if (jobDeleteResponse.getStatus() != JobDeleteResponse.Status.OK) {
                 throw new CloudException("Failed to remove Helios job, status " + jobDeleteResponse.getStatus());
             }
 
             LOG.debug("Finished stopping instance " + instance.getInstanceId());
             instanceIdJobMap.remove(instance.getInstanceId());
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new CloudException("Failed to stop instance", e);
         }
     }
@@ -145,7 +158,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
     public String getError(String instanceId) {
         try {
             JobId jobId = JobId.fromString(instanceIdJobMap.get(instanceId));
-            JobStatus jobStatus = heliosClient.jobStatus(jobId).get();
+            JobStatus jobStatus = getHeliosResult(heliosClient.jobStatus(jobId));
             if (jobStatus == null) {
                 LOG.warn("Trying to read error state of non-existent job " + jobId);
                 return null;
@@ -165,7 +178,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
                 }
             }
             return sb.toString();
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new CloudException("Failed to read error information from instance " + instanceId, e);
         }
     }
@@ -174,7 +187,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
     public String getNetworkIdentity(String instanceId) {
         try {
             JobId jobId = JobId.fromString(instanceIdJobMap.get(instanceId));
-            JobStatus jobStatus = heliosClient.jobStatus(jobId).get();
+            JobStatus jobStatus = getHeliosResult(heliosClient.jobStatus(jobId));
             if (jobStatus == null) {
                 LOG.warn("Trying to read network identity of non-existent job " + jobId.getName());
                 return null;
@@ -185,7 +198,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
                     .orElseThrow(() -> new CloudException("Container " + instanceId + " not deployed on any host"));
             // TODO: How to do this?
             return null;
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new CloudException("Failed to read network information from instance " + instanceId, e);
         }
     }
@@ -194,7 +207,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
     public Date getStartedTime(String instanceId) {
         try {
             JobId jobId = JobId.fromString(instanceIdJobMap.get(instanceId));
-            JobStatus jobStatus = heliosClient.jobStatus(jobId).get();
+            JobStatus jobStatus = getHeliosResult(heliosClient.jobStatus(jobId));
             if (jobStatus == null) {
                 LOG.warn("Trying to read start time of non-existent job " + jobId.getName());
                 return null;
@@ -204,7 +217,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
                     .findFirst()
                     .orElseThrow(() -> new CloudException("Container " + instanceId + " not deployed on any host"));
             return new Date(jobStatus.getTaskStatuses().get(host).getJob().getCreated());
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
             throw new CloudException("Failed to read start time information from instance " + instanceId, e);
         }
     }
@@ -213,7 +226,7 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
     public InstanceStatus getStatus(String instanceId) {
         try {
             JobId jobId = JobId.fromString(instanceIdJobMap.get(instanceId));
-            JobStatus jobStatus = heliosClient.jobStatus(jobId).get();
+            JobStatus jobStatus = getHeliosResult(heliosClient.jobStatus(jobId));
             if (jobStatus == null) {
                 LOG.warn("Trying to read status of non-existent job " + jobId.getName());
                 return InstanceStatus.UNKNOWN;
@@ -237,7 +250,8 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
 
             LOG.warn("Could not map state '" + state.toString() + "' to InstanceStatus");
             return InstanceStatus.UNKNOWN;
-        } catch (InterruptedException | ExecutionException e) {
+        } catch (InterruptedException | ExecutionException | TimeoutException e) {
+            LOG.warn("Could not fetch state for " + instanceId, e);
             return InstanceStatus.UNKNOWN;
         }
     }
