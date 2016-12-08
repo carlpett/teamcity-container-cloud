@@ -267,4 +267,21 @@ public class HeliosContainerProvider implements ContainerProvider, ContainerInst
             return toReturn;
         };
     }
+
+    @Override
+    public TestConnectionResult testConnection() {
+        TestConnectionResult result = new TestConnectionResult();
+        try {
+            if (getHosts().isEmpty()) {
+                result.addMessage("Connection successful, but no hosts matched name and label conditions. Will not be able to start containers.", TestConnectionResult.Message.MessageLevel.WARNING);
+            }
+
+            result.setOk(true);
+            return result;
+        } catch(Exception e) {
+            result.setOk(false);
+            result.addMessage("Failed to connect to Helios: " + e.getMessage(), TestConnectionResult.Message.MessageLevel.ERROR);
+            return result;
+        }
+    }
 }
