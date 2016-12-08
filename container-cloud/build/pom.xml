@@ -10,11 +10,6 @@
     <artifactId>build</artifactId>
     <packaging>pom</packaging>
     <properties>
-        <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
-        <teamcity.container-cloud.plugin.version>snapshot-${maven.build.timestamp}
-        </teamcity.container-cloud.plugin.version>
-        <teamcity.container-cloud.plugin.vendorName>Plugin vendor name</teamcity.container-cloud.plugin.vendorName>
-        <teamcity.container-cloud.plugin.vendorUrl>Plugin vendor URL</teamcity.container-cloud.plugin.vendorUrl>
     </properties>
     <dependencies>
         <dependency>
@@ -43,15 +38,7 @@
                     <replacements>
                         <replacement>
                             <token>@Version@</token>
-                            <value>${teamcity.container-cloud.plugin.version}</value>
-                        </replacement>
-                        <replacement>
-                            <token>@VendorName@</token>
-                            <value>${teamcity.container-cloud.plugin.vendorName}</value>
-                        </replacement>
-                        <replacement>
-                            <token>@VendorURL@</token>
-                            <value>${teamcity.container-cloud.plugin.vendorUrl}</value>
+                            <value>${parent.version}</value>
                         </replacement>
                     </replacements>
                 </configuration>
