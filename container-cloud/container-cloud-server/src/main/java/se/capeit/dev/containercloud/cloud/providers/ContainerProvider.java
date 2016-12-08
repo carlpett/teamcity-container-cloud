@@ -9,4 +9,6 @@ public interface ContainerProvider {
     ContainerCloudInstance startInstance(@NotNull String instanceId, @NotNull ContainerCloudImage image, @NotNull CloudInstanceUserData tag);
 
     void stopInstance(@NotNull ContainerCloudInstance instance);
+
+    TestConnectionResult testConnection();
 }

@@ -2,8 +2,8 @@ package se.capeit.dev.containercloud.cloud;
 
 public final class ContainerCloudConstants {
     public static final String CloudCode = "Cntnr";
-    public static final String ProfileSettingsHtmlFile = "profile-settings.html";
     public static final String ProfileSettingsJspFile = "profile-settings.jsp";
+    public static final String ProfileSettingsTestConnectionPath = "profile-settings/test-connection.jsp";
 
     public static final String ProfileParameterName_ContainerProvider = "ContainerProvider";
     public static final String ProfileParameterName_Images = "Images";
@@ -27,6 +27,10 @@ public final class ContainerCloudConstants {
     // JSP getters
     public String getCloudCode() {
         return CloudCode;
+    }
+
+    public String getProfileSettingsTestConnectionPath() {
+        return ProfileSettingsTestConnectionPath;
     }
 
     public String getProfileParameterName_ContainerProvider() {

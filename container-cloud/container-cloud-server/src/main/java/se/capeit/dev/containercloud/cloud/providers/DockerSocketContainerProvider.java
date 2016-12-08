@@ -144,4 +144,20 @@ public class DockerSocketContainerProvider implements ContainerProvider, Contain
             return toReturn;
         };
     }
+
+    @Override
+    public TestConnectionResult testConnection() {
+        TestConnectionResult result = new TestConnectionResult();
+
+        try {
+            String id = dockerClient.info().id();
+            //result.addMessage("Successfully connected to Docker instance with id " + id, TestConnectionResult.Message.MessageLevel.INFO);
+            result.setOk(true);
+        } catch (DockerException | InterruptedException e) {
+            result.setOk(false);
+            result.addMessage("Failed to connect to Docker: " + e.getMessage(), TestConnectionResult.Message.MessageLevel.ERROR);
+        }
+
+        return result;
+    }
 }

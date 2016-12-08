@@ -18,6 +18,25 @@
     width: 31em;
 }
 
+#test-connection-spinner {
+    height: 12px;
+    width: 12px;
+    align-self: center;
+    margin-right: 4px;
+}
+
+#test-connection-messages-list {
+    list-style: none;
+    padding-left: 2em;
+}
+
+#test-connection-messages-list > li {
+    display: flex;
+}
+.test-connection-message {
+    margin-left: 0.5em;
+}
+
 #container-images > option {
     padding-left: 0.2em;
     padding-top: 0.2em;
@@ -119,9 +138,38 @@
     </td>
 </tr>
 
+<tr>
+    <th>Test connection</th>
+    <td>
+        <div style="display: flex; align-items: center;">
+            <div style="padding-right: 1em;">
+                <a class="btn" id="test-connection-button">
+                    <span>Test connection</span>
+                </a>
+            </div>
+            <div id="test-connection-spinner-container">
+                <span id="test-connection-spinner" class="icon-refresh icon-spin progressRing"></span>
+                Testing...
+            </div>
+            <div id="test-connection-results-status">
+                <div id="test-connection-status-success">
+                    <span id="test-connection-success-icon" class="tc-icon icon16 build-status-icon_successful"></span>
+                    Success!
+                </div>
+                <div id="test-connection-status-error">
+                    <span id="test-connection-success-icon" class="tc-icon icon16 build-status-icon_error"></span>
+                    Connection test was not successful
+                </div>
+            </div>
+        </div>
+        <div id="test-connection-results-messages">
+            <ul id="test-connection-messages-list"></ul>
+        </div>
+    </td>
+</tr>
+
 <script type="text/javascript">
 // source-id below is the field name for image id in CloudImageParameters
-
 function addExistingImages() {
     var imagesRaw = document.getElementById("${constants.profileParameterName_Images}-backing-field").value;
     var images = JSON.parse(imagesRaw);
@@ -176,6 +224,64 @@ $j(document).ready(function() {
         });
 
         saveToBackingField();
+    });
+
+    // Set initially hidden
+    $j("#test-connection-results-status").hide();
+    $j("#test-connection-results-messages").hide();
+    $j("#test-connection-spinner-container").hide();
+    var icons = {
+        "INFO": "newVersionLink",
+        "WARNING": "yellowTriangle",
+        "ERROR": "build-status-icon_error"
+    };
+    $j("#test-connection-button").click(function() {
+        $j("#test-connection-results-status").hide();
+        $j("#test-connection-results-messages").hide();
+        $j("#test-connection-spinner-container").show();
+
+        // Copied from Vmware cloud plugin, https://github.com/JetBrains/teamcity-vmware-plugin/blob/master/cloud-vmware-server/src/main/resources/buildServerResources/vmware-settings.js
+        var url = '<c:url value="${teamcityPluginResourcesPath}${constants.profileSettingsTestConnectionPath}" />';
+        BS.ajaxRequest(url, {
+            parameters: BS.Clouds.Admin.CreateProfileForm.serializeParameters(),
+            onFailure: function (response) {
+                $j("#test-connection-status-success").hide();
+                $j("#test-connection-status-error").show();
+
+                $j("#test-connection-messages-list").empty();
+                messages.children().each(function(message) {
+                    $j("#test-connection-messages-list").append("<li>" + response.getStatusText() + "</li>");
+                });
+            },
+            onSuccess: function (response) {
+                var result = $j(response.responseXML),
+                    isOk = result.find("ok"),
+                    messages = result.find("messages");
+
+                if (isOk.text() === "true") {
+                    $j("#test-connection-status-success").show();
+                    $j("#test-connection-status-error").hide();
+                } else {
+                    $j("#test-connection-status-success").hide();
+                    $j("#test-connection-status-error").show();
+                }
+
+                $j("#test-connection-messages-list").empty();
+                if(messages.length != 0) {
+                    messages.children().each(function(idx, message) {
+                        var listItem = $j("<li></li>");
+                        var icon = icons[$j(message).attr("level")];
+                        listItem.append("<div class=\"tc-icon icon_before icon16 " + icon + "\"></div>");
+                        listItem.append("<div class=\"test-connection-message\">" + $j(message).text() + "</div>");
+                        $j("#test-connection-messages-list").append(listItem);
+                    });
+                    $j("#test-connection-results-messages").show();
+                }
+
+                $j("#test-connection-spinner-container").hide();
+                $j("#test-connection-results-status").show();
+            }
+        });
     });
 
     addExistingImages();
