@@ -8,6 +8,7 @@ import com.spotify.docker.client.DockerClient;
 import com.spotify.docker.client.exceptions.ContainerNotFoundException;
 import com.spotify.docker.client.exceptions.DockerCertificateException;
 import com.spotify.docker.client.exceptions.DockerException;
+import com.spotify.docker.client.messages.AuthConfig;
 import com.spotify.docker.client.messages.ContainerConfig;
 import com.spotify.docker.client.messages.ContainerCreation;
 import com.spotify.docker.client.messages.ContainerState;
@@ -23,6 +24,7 @@ import se.capeit.dev.containercloud.cloud.ContainerCloudConstants;
 import se.capeit.dev.containercloud.cloud.ContainerCloudImage;
 import se.capeit.dev.containercloud.cloud.ContainerCloudInstance;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -36,6 +38,11 @@ public class DockerSocketContainerProvider implements ContainerProvider, Contain
     public DockerSocketContainerProvider(CloudClientParameters cloudClientParams) {
         try {
             DefaultDockerClient.Builder builder = DefaultDockerClient.fromEnv();
+            try {
+                builder.authConfig(AuthConfig.fromDockerConfig().build());
+            } catch(IOException e) {
+                LOG.info("Could not load docker configuration file, proceeding without authentication settings.");
+            }
 
             String apiEndpoint = cloudClientParams.getParameter(ContainerCloudConstants.ProfileParameterName_DockerSocket_Endpoint);
             if (!Strings.isNullOrEmpty(apiEndpoint)) {

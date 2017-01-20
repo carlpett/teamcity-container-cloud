@@ -38,7 +38,7 @@
                     <replacements>
                         <replacement>
                             <token>@Version@</token>
-                            <value>${parent.version}</value>
+                            <value>${project.parent.version}</value>
                         </replacement>
                     </replacements>
                 </configuration>
